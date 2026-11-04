@@ -17,14 +17,14 @@ export function TopBar({ title, children, scrolled = false, className }: TopBarP
     <header
       data-state={scrolled ? "scrolled" : "default"}
       className={cx(
-        "pt-safe px-gutter shrink-0 border-b bg-canvas",
+        "pt-safe px-gutter flex shrink-0 items-center border-b bg-canvas",
         "min-h-[calc(var(--size-topbar)+env(safe-area-inset-top,0px))]",
         "short:min-h-[calc(3rem+env(safe-area-inset-top,0px))]",
         scrolled ? "border-line-subtle" : "border-transparent",
         className,
       )}
     >
-      <div className="mx-auto flex min-h-14 max-w-content items-center justify-between gap-3 short:min-h-12">
+      <div className="mx-auto flex max-w-content flex-1 items-center justify-between gap-3">
         {title ? <h1 className="text-title-2 text-fg">{title}</h1> : null}
         {children}
       </div>

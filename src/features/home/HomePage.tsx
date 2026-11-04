@@ -10,6 +10,9 @@ import { XPBar } from "@/ui/components/XPBar";
 const STORAGE_BLOCKED_COPY =
   "This browser mode can't save progress. You can play; nothing is kept after you close the app.";
 
+/** Non-breaking spaces keep each segment whole, so the line only wraps at the dots. Reads as one sentence. */
+const FIRST_SESSION_COPY = "Your\u00a0first\u00a0session\u00a0· 10\u00a0new\u00a0scenarios\u00a0· ~5\u00a0min";
+
 function todayLabel(): string {
   return new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
@@ -75,7 +78,7 @@ export function HomePage() {
               <Skeleton visible={painted} className="h-6 w-full" />
             </div>
           ) : firstRun ? (
-            <p className="text-title-3 text-fg">Your first session · 10 new scenarios · ~5 min</p>
+            <p className="text-title-3 text-fg">{FIRST_SESSION_COPY}</p>
           ) : (
             // TODO(E4-07): "N reviews due · M new" and the domain mix (DomainBadge dot) come from the SRS queue.
             <>

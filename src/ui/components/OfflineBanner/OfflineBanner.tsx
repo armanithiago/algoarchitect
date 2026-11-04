@@ -48,7 +48,7 @@ export function OfflineBanner({ mode, onDismiss }: OfflineBannerProps) {
     >
       <div className="min-h-0 overflow-hidden">
         {mounted ? (
-          <div className="flex items-start gap-2 rounded-lg bg-surface-hover py-1.5 pl-3 pr-1 text-fg-secondary">
+          <div className="mb-4 flex items-start gap-2 rounded-lg bg-surface-hover py-1.5 pl-3 pr-1 text-fg-secondary">
             {isOffline ? <WifiOff size={16} className="mt-2.5 shrink-0" aria-hidden="true" /> : null}
             <p className={cx("flex-1 pt-2 text-caption", !isOffline && "pb-2")}>
               {isOffline ? "Offline. Everything works; progress is saved on this device." : "Back online."}
