@@ -28,6 +28,16 @@ export function AppShell() {
   const online = useOnlineStatus();
   const banner = useOfflineBanner(online);
 
+  // Lift toasts above the tab bar (ToastHost lives outside the shell). Removed again when the shell unmounts,
+  // e.g. on session screens, which have no tab bar.
+  useLayoutEffect(() => {
+    const root = document.documentElement.style;
+    root.setProperty("--toast-offset-bottom", "var(--size-tabbar)");
+    return () => {
+      root.removeProperty("--toast-offset-bottom");
+    };
+  }, []);
+
   // A new tab starts at the top.
   useLayoutEffect(() => {
     scroller.current?.scrollTo?.(0, 0);
