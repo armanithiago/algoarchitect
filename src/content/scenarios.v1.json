@@ -1,0 +1,326 @@
+{
+  "schema": 1,
+  "contentVersion": 1,
+  "scenarios": [
+    {
+      "id": "hashing-001",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "consistent-hashing",
+      "difficulty": 2,
+      "title": "Cache cluster resizing",
+      "prompt": "Your CDN shards 40M cache keys across 12 nodes. Nodes join and leave during traffic spikes. Map keys to nodes so that the fewest keys move when the pool changes.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Modulo hashing (key % n)",
+          "rationale": "Changing n remaps almost every key, so the cache goes cold after a resize."
+        },
+        {
+          "id": "b",
+          "label": "Consistent hashing",
+          "rationale": "Adding or removing a node remaps only about 1/n of the keys, so caches stay warm."
+        },
+        {
+          "id": "c",
+          "label": "Sorted array + binary search",
+          "rationale": "Finds keys quickly but does not solve remapping on its own."
+        },
+        {
+          "id": "d",
+          "label": "Min-heap by node load",
+          "rationale": "Balances load, not key placement."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Consistent hashing places nodes and keys on a ring, so adding or removing a node remaps only about 1/n of the keys and caches stay warm during resizes. Virtual nodes keep the load even.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Consistent hashing: lookup cost for one key with n nodes on the ring (sorted ring, binary search)?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(log n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "caching",
+        "sharding"
+      ]
+    },
+    {
+      "id": "graphs-001",
+      "version": 1,
+      "domain": "graphs",
+      "concept": "dijkstra",
+      "difficulty": 1,
+      "title": "Ride-hailing ETA",
+      "prompt": "Riders see a pickup ETA within a second. Road segments carry live travel times, always positive. Find the fastest route from the driver to the rider.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Breadth-first search",
+          "rationale": "Finds the fewest hops, not the lowest travel time."
+        },
+        {
+          "id": "b",
+          "label": "Dijkstra + binary heap",
+          "rationale": "With non-negative weights it finalizes nodes in order of distance, so the first pop of the rider is the fastest route."
+        },
+        {
+          "id": "c",
+          "label": "Depth-first search",
+          "rationale": "Explores deep paths first and gives no shortest-path guarantee."
+        },
+        {
+          "id": "d",
+          "label": "Topological sort",
+          "rationale": "Orders dependencies in a DAG, and road graphs have cycles."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "With non-negative weights, Dijkstra finalizes nodes in order of distance, so the first time it pops the rider's node, that route is the fastest. A binary heap keeps each step cheap.",
+      "complexity": {
+        "time": "O((V + E) log V)",
+        "space": "O(V)"
+      },
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "Dijkstra from S. Which node is finalized first after S?",
+          "visual": {
+            "kind": "graph",
+            "caption": "Weighted graph · start S",
+            "start": "S",
+            "nodes": [
+              {
+                "id": "S",
+                "label": "S",
+                "x": 48,
+                "y": 56
+              },
+              {
+                "id": "A",
+                "label": "A",
+                "x": 272,
+                "y": 56
+              },
+              {
+                "id": "B",
+                "label": "B",
+                "x": 48,
+                "y": 188
+              },
+              {
+                "id": "C",
+                "label": "C",
+                "x": 160,
+                "y": 188
+              },
+              {
+                "id": "D",
+                "label": "D",
+                "x": 272,
+                "y": 188
+              }
+            ],
+            "edges": [
+              {
+                "from": "S",
+                "to": "A",
+                "weight": 7
+              },
+              {
+                "from": "S",
+                "to": "B",
+                "weight": 2
+              },
+              {
+                "from": "S",
+                "to": "C",
+                "weight": 4
+              },
+              {
+                "from": "A",
+                "to": "D",
+                "weight": 1
+              },
+              {
+                "from": "B",
+                "to": "C",
+                "weight": 3
+              },
+              {
+                "from": "C",
+                "to": "D",
+                "weight": 2
+              }
+            ]
+          },
+          "answerTargetId": "B"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "29.2"
+        }
+      ],
+      "tags": [
+        "routing",
+        "shortest-path"
+      ]
+    },
+    {
+      "id": "graphs-002",
+      "version": 1,
+      "domain": "graphs",
+      "concept": "bfs",
+      "difficulty": 1,
+      "title": "Friend suggestions",
+      "prompt": "Show “people you may know”: users exactly two hops away, closest first. The social graph is unweighted and has 300M users.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Breadth-first search",
+          "rationale": "Explores level by level, so distance-2 users come out before anyone farther away."
+        },
+        {
+          "id": "b",
+          "label": "Depth-first search",
+          "rationale": "Dives deep before going wide, so distance-2 users can come out last."
+        },
+        {
+          "id": "c",
+          "label": "Dijkstra + binary heap",
+          "rationale": "Works, but every edge weighs 1, so the heap is pure overhead."
+        },
+        {
+          "id": "d",
+          "label": "Union-Find",
+          "rationale": "Answers whether two users are connected, not how far apart they are."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "BFS explores level by level, so friends of friends (distance 2) come out before anyone farther away, and the first time it reaches a user is along a shortest path. Stop after level 2.",
+      "complexity": {
+        "time": "O(V + E)",
+        "space": "O(V)"
+      },
+      "validations": [
+        {
+          "type": "traceOrder",
+          "question": "Tap the nodes in the order BFS visits them from Y. Neighbors are queued in alphabetical order.",
+          "visual": {
+            "kind": "graph",
+            "caption": "Social graph · start Y (you)",
+            "start": "Y",
+            "nodes": [
+              {
+                "id": "Y",
+                "label": "Y",
+                "x": 44,
+                "y": 120
+              },
+              {
+                "id": "B",
+                "label": "B",
+                "x": 140,
+                "y": 52
+              },
+              {
+                "id": "D",
+                "label": "D",
+                "x": 140,
+                "y": 188
+              },
+              {
+                "id": "A",
+                "label": "A",
+                "x": 252,
+                "y": 40
+              },
+              {
+                "id": "E",
+                "label": "E",
+                "x": 252,
+                "y": 124
+              },
+              {
+                "id": "C",
+                "label": "C",
+                "x": 252,
+                "y": 204
+              }
+            ],
+            "edges": [
+              {
+                "from": "Y",
+                "to": "B"
+              },
+              {
+                "from": "Y",
+                "to": "D"
+              },
+              {
+                "from": "B",
+                "to": "A"
+              },
+              {
+                "from": "B",
+                "to": "E"
+              },
+              {
+                "from": "D",
+                "to": "C"
+              },
+              {
+                "from": "A",
+                "to": "E"
+              },
+              {
+                "from": "E",
+                "to": "C"
+              }
+            ]
+          },
+          "algorithm": "bfs",
+          "tieBreak": "alphabetical",
+          "givenPrefix": 1,
+          "answer": [
+            "Y",
+            "B",
+            "D",
+            "A",
+            "E",
+            "C"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "13.3"
+        }
+      ],
+      "tags": [
+        "social",
+        "traversal"
+      ]
+    }
+  ]
+}
