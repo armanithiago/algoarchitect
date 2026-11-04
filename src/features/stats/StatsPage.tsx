@@ -1,4 +1,6 @@
-/** STUB: Agent B replaces this page. */
+import { EmptyState } from "@/ui/components/EmptyState";
+
+/** Placeholder: the screen title lives in the AppShell TopBar. The real screen lands in a later sprint. */
 export function StatsPage() {
-  return <h1 className="text-title-1">Stats</h1>;
+  return <EmptyState title="Coming soon" body="Accuracy and progress per domain will live here." />;
 }

@@ -1,4 +1,6 @@
-/** STUB: Agent B replaces this page. */
+import { EmptyState } from "@/ui/components/EmptyState";
+
+/** Placeholder: the screen title lives in the AppShell TopBar. The real screen lands in a later sprint. */
 export function StudyPage() {
-  return <h1 className="text-title-1">Study</h1>;
+  return <EmptyState title="Coming soon" body="The Patterns Handbook chapters will live here." />;
 }
