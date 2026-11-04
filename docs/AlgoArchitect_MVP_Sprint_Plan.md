@@ -82,7 +82,8 @@ Nov 2026          Dec 2026              Jan 2027              Feb 2027
 - Procedurally generated scenarios. The "scenario generator" in the MVP **selects and shuffles** authored scenarios and does not create new ones.
 - Push notifications for streak reminders (possibly a stretch goal in Sprint 6).
 - Practice a single domain from Home (E3-09). It is superseded in the MVP by **Practice this pattern** in the Study area (E6-09).
-- Notes, highlights or bookmarks in the Study area, and handbook code samples in languages other than C#.
+- Notes, highlights or bookmarks in the Study area, and code samples in languages other than C# and pseudocode.
+- Pseudocode for the remaining ~270 handbook code blocks (problem walkthroughs). The MVP covers the linked sections and chapter templates (E6-10).
 - Localization. The MVP is English only, but strings are kept in i18n files.
 - Native app-store builds.
 
@@ -268,10 +269,11 @@ The Study area is generated from [`armanithiago/patterns-handbook`](https://gith
 1. **Pin a version.** The app repo pins a handbook commit or tag (`study.lock.json`). Updating it is a normal PR, so content changes are reviewed and versioned like scenarios.
 2. **Parse and normalize.** `scripts/study/build.ts` reads the Markdown and splits it into chapters and sections. The handbook's heading levels are not uniform: some chapters are `#` headings, others are `##` headings under `# Stage N` wrappers, and some sections are `##` while others (Chapter 29) are `###`. The parser identifies chapters by the `Chapter N:` pattern and sections by the `N.M` number, whatever the heading level, and drops the `Stage` wrappers. Appendices become chapters A–D.
 3. **Stable ids.** Chapters get `ch13`; sections get their number (`13.3`). Scenario `study.sectionId` values point at these, and the content CI fails on a missing id.
-4. **Render at build time.** Markdown becomes HTML with `marked`; C# is highlighted with `highlight.js` into token classes that map to the design-system syntax colors; tables keep a scroll wrapper. **Mermaid is pre-rendered to SVG** in CI (`@mermaid-js/mermaid-cli`), then post-processed so strokes and text use `currentColor` and the design tokens, so diagrams follow both themes and need no runtime library. Emoji in headings are stripped.
-5. **Output.** `public/study/index.json` (parts, chapters, section titles, word counts, domain mapping) plus one `public/study/ch-XX.json` per chapter. Budget: ≤ 400 KB gzipped for the whole bundle. Nothing of it is in the initial JS bundle.
-6. **Domain mapping.** A small hand-maintained table maps chapters to the five app domains (for example Ch. 13, 14, 15, 27, 29 → Graphs; Ch. 22 → DP), so library rows show domain dots and **Practice this pattern** knows which scenarios to pull.
-7. **Snapshot tests** on a few chapters catch handbook format changes before they reach users.
+4. **Pair pseudocode.** Each C# block can be followed by a ```` ```pseudo ```` block in the handbook. The parser pairs the two into one code block with a **Pseudocode | C#** switch (design system §7.24); pseudocode is the default. Unpaired C# blocks still ship, and the build prints the coverage (paired / total).
+5. **Render at build time.** Markdown becomes HTML with `marked`; C# and pseudocode are highlighted with `highlight.js` into token classes that map to the design-system syntax colors; tables keep a scroll wrapper. **Mermaid is pre-rendered to SVG** in CI (`@mermaid-js/mermaid-cli`), then post-processed so strokes and text use `currentColor` and the design tokens, so diagrams follow both themes and need no runtime library. Emoji in headings are stripped.
+6. **Output.** `public/study/index.json` (parts, chapters, section titles, word counts, domain mapping) plus one `public/study/ch-XX.json` per chapter. Budget: ≤ 400 KB gzipped for the whole bundle. Nothing of it is in the initial JS bundle.
+7. **Domain mapping.** A small hand-maintained table maps chapters to the five app domains (for example Ch. 13, 14, 15, 27, 29 → Graphs; Ch. 22 → DP), so library rows show domain dots and **Practice this pattern** knows which scenarios to pull.
+8. **Snapshot tests** on a few chapters catch handbook format changes before they reach users.
 
 ---
 
@@ -340,11 +342,12 @@ Estimates are in story points (SP). Priorities follow MoSCoW: **M**ust, **S**hou
 | E6-01 | Build the handbook pipeline: pin version, parse and normalize headings, stable ids, Markdown → HTML, C# highlighting, per-chapter JSON (§4.6) | M | 5 |
 | E6-02 | Pre-render the 116 Mermaid diagrams to themed SVG in CI | M | 3 |
 | E6-03 | As a user, I see a Study tab with the handbook library grouped by part, domain dots, reading progress and "Continue reading" | M | 3 |
-| E6-04 | As a user, I read a chapter: section chips, prose, code, tables, diagrams; my position is remembered | M | 5 |
+| E6-04 | As a user, I read a chapter: section chips, prose, code with the Pseudocode/C# switch, tables, diagrams; my position is remembered | M | 6 |
 | E6-05 | As a user, I can open **Study** mid-question in a sheet and come back to the same answer; studied answers are graded as in §4.4 | M | 3 |
 | E6-06 | Content: link all 50 scenarios to 1–2 handbook sections, with the CI id check | M | 2 |
 | E6-07 | **Mini-Validation: Trace-order**: numbered taps, undo, per-position verdict, list-view alternative; reuses TraceCanvas (E3-11) | M | 3 |
 | E6-08 | Content: add a trace-order validation to 10 scenarios, with the CI "run the algorithm" uniqueness check | M | 2 |
+| E6-10 | Content: pseudocode twins in the handbook for every section linked by a scenario plus each chapter's template code (~60 of the 333 C# blocks), following the conventions in design system §7.24. **Written by the handbook author** in `patterns-handbook`; Dev C reviews | M | 3 |
 | E6-09 | As a user, I can start **Practice this pattern** from a chapter (concept-filtered practice that doesn't change review dates) | S | 2 |
 
 ### Epic E5 — Hardening & Launch (Sprint 6)
@@ -360,7 +363,7 @@ Estimates are in story points (SP). Priorities follow MoSCoW: **M**ust, **S**hou
 | E5-08 | Production deploy, custom domain, privacy note, release notes `v1.0.0` | M | 2 |
 | E5-09 | Optional streak reminder with the local Notification API | C | 3 |
 
-**Total MVP (Must + Should): about 177 SP** (149 before + 28 for E6). Capacity is about 7 × 24 = 168 SP. The plan therefore depends on two stretch items and one cut line:
+**Total MVP (Must + Should): about 181 SP** (149 before + 32 for E6). E6-10 (3 SP) is written by the handbook author, outside the developers' capacity, so the developer total is about 178 SP against a capacity of about 7 × 24 = 168 SP. The plan therefore depends on two stretch items and one cut line:
 - **Stretch:** E4-08 (analytics queue, 3) and E3-08 (resume session, 3) in Sprint 4. If they miss, E4-08 goes to v1.1 and E3-08 moves to Sprint 6.
 - **Could:** E5-09 (streak reminder, 3) is the first thing cut.
 - **Cut line if Sprint 4 velocity is below 24:** E6-09 (Practice this pattern, 2) moves to v1.1, and E5-06 onboarding shrinks to one screen plus the coach mark (saves 2).
@@ -508,17 +511,18 @@ Difficulty mix per domain is 4 × D1, 4 × D2, 2 × D3.
 | E6-01 Handbook pipeline | 5 | Dev A |
 | E6-02 Mermaid → themed SVG | 3 | Dev A |
 | E6-03 Study library | 3 | Dev B |
-| E6-04 Chapter reader | 5 | Dev B |
+| E6-04 Chapter reader + code switch | 6 | Dev B |
 | E6-05 Study sheet + studied grading | 3 | Dev C |
 | E6-06 Link 50 scenarios to sections | 2 | Dev C |
 | E6-07 Trace-order validation | 3 | Dev C + Dev B |
 | E6-08 Trace-order content (10 scenarios) | 2 | Dev C |
-| **Total** | **26** | |
+| **Total (developers)** | **27** | |
+| E6-10 Pseudocode twins (~60 blocks) | 3 | Handbook author, reviewed by Dev C |
 
-*Planned 2 SP over capacity: E6-01 starts in week 1 of Sprint 4 as a spike if Sprint 4 has slack. E6-09 (Practice this pattern) moves to Sprint 6.*
+*E6-10 can start any time after Sprint 0 (it only needs the conventions), so the core blocks are ready before the pipeline lands. Developers are planned 3 SP over capacity: E6-01 starts in week 1 of Sprint 4 as a spike if Sprint 4 has slack. E6-09 (Practice this pattern) moves to Sprint 6.*
 
 **Exit criteria / demo:**
-- Airplane mode: open the Study tab, read Chapter 13 with its diagram and code, then tap **Practice this pattern**.
+- Airplane mode: open the Study tab, read Chapter 13 with its diagram and code, switch the code between Pseudocode and C# (the choice sticks everywhere), then tap **Practice this pattern**.
 - In a session, tap **Study**, read the section, go back: the selection is kept, the verdict shows "Studied", +5 XP, and the scenario is due tomorrow.
 - A trace-order check (BFS from the start node) shows numbered taps, Undo works, and a wrong order shows which positions were right. The list view gives the same result with a screen reader.
 - Content CI fails if a `study.sectionId` is missing or a `traceOrder` answer doesn't match the algorithm's real output.
@@ -588,7 +592,7 @@ Difficulty mix per domain is 4 × D1, 4 × D2, 2 × D3.
 | R9 | Handbook format drift breaks the study pipeline (headings already vary between `#`, `##` and `###`) | Medium | Medium | Parse by `Chapter N:` and `N.M` patterns, not by level; pin a handbook version; snapshot tests; CI fails loudly instead of shipping a broken chapter |
 | R10 | The 116 Mermaid diagrams render badly in dark mode or on a 360 px screen | Medium | Low | Build-time SVG with token colors, horizontal scroll inside the figure, a text fallback (the diagram's source table or caption) if rendering fails |
 | R11 | Ambiguous trace-order answers (several valid BFS/DFS orders) | Medium | High | Every question states its tie-break; the content CI runs the algorithm and rejects ambiguous graphs |
-| R12 | Plan is ~9 SP over capacity after adding the Study area | Medium | Medium | Stretch items and the cut line in §5; re-plan at the Sprint 4 review with real velocity |
+| R12 | Plan is ~10 SP over developer capacity after adding the Study area | Medium | Medium | Stretch items and the cut line in §5; re-plan at the Sprint 4 review with real velocity |
 
 ---
 
@@ -645,5 +649,5 @@ Difficulty mix per domain is 4 × D1, 4 × D2, 2 × D3.
 | Q3 | Analytics provider (Plausible, Umami, or none) for opt-in events | PO | Sprint 4 planning (Jan 18) |
 | Q4 | Who are the beta testers (target 10–20 engineers)? | PO | Sprint 4 end (Jan 29) |
 | Q5 | Is a visual brand or logo needed for the MVP, or is a placeholder fine? | Designer | Sprint 0 end |
-| Q6 | Which handbook version is pinned for v1.0, and does the handbook need a license file before it ships inside the app? | PO | Sprint 5 planning (Feb 1) |
-| Q7 | Should Study show the handbook's C# samples only, or also language-neutral pseudocode? | PO + Dev C | Sprint 5 planning (Feb 1) |
+| Q6 | Which handbook version (tag or commit) is pinned for v1.0? *Resolved in part: the handbook is the product owner's own work, so it can be bundled. Adding a LICENSE file to `patterns-handbook` is still recommended so the in-app credit has something to point to.* | PO | Sprint 5 planning (Feb 1) |
+| Q7 | ~~C# only, or also pseudocode?~~ **Resolved: pseudocode twins, default in the app, with a Pseudocode \| C# switch (E6-10, design system §7.24).** | — | — |

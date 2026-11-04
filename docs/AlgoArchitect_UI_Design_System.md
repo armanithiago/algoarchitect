@@ -1480,15 +1480,34 @@ Opening it never resets the selection or the trace sequence. Esc and the footer 
 | Paragraph, list item | `body-lg`, `--fg`; lists indent 22 px, 4 px between items |
 | Strong | weight 600 (no italics, §3.3) |
 | Inline code | mono 0.9 em on `--surface-hover`, `radius-xs`, 0 4 px padding |
-| Code block | mono 13/20, `--surface` (in a sheet: `--canvas`), 1 px `--line-subtle`, `radius-md`, padding 12/16, **horizontal scroll inside the block** (never the page), ligatures off, `tab-size: 4` |
+| Code block | a **CodeBlock** (below): mono 13/20, `--surface` (in a sheet: `--canvas`), 1 px `--line-subtle`, `radius-md`, padding 12/16, **horizontal scroll inside the block** (never the page), ligatures off, `tab-size: 4` |
 | Syntax colors | `--code-keyword` (accent-fg), `--code-type` (graphs-fg), `--code-string` (sorting-fg), `--code-number` (dp-fg), `--code-comment` (fg-muted). All pass 4.5:1 on both code backgrounds in both themes because they reuse the `-fg` text tokens |
 | Table | inside a 1 px `--line-subtle`, `radius-md` scroll wrapper (`tabindex="0"`, labelled); `body-sm`; header row `--surface-hover` 600 |
 | Diagram | pre-rendered SVG (sprint plan §4.6) in a `--surface` frame, `radius-md`, padding 12; strokes and text use tokens; `role="img"` with the caption as its accessible name |
 | Big-O in prose | the Complexity primitive (§7.22), so `O(V^2)` gets real superscripts |
 
+**CodeBlock and the Pseudocode | C# switch.** Every handbook code block is a `<figure>` with a 48 px header row: the language label at the left (`caption`, `--fg-muted`: "Pseudocode" or "C# · from the handbook") and, when the block has a pseudocode twin, a small SegmentedControl at the right: **Pseudocode | C#** (40 px visual, 48 px hit, `role="radiogroup"`, label "Code language"). The code sits under a 1 px `--line-subtle` divider.
+- **Default: Pseudocode.** It is language-neutral, so the Study area works for engineers who don't write C#.
+- **One global choice.** Switching any block switches every block, the reader and the StudySheet, and it is saved in `profile.settings.codeLanguage`. Settings has the same control under **Study → Code in Study**.
+- Blocks without a pseudocode twin show only the "C#" label (no switch), and are counted in the pipeline report so coverage is visible.
+- Switching keeps the reading position (no scroll jump) and is announced by the radiogroup itself, not by a toast.
+
+**Pseudocode conventions** (authoring guide for the handbook's `pseudo` blocks):
+
+| Rule | Example |
+|---|---|
+| Indentation shows structure; a block opener ends with `:` | `while queue is not empty:` |
+| Lowercase keywords: `function`, `for each … in`, `for … from … to`, `while`, `if`, `else`, `return`, `and`, `or`, `not`, `in`, `is empty`, `continue`, `break` | `for each neighbor in graph[node]:` |
+| `=` assigns; comparisons are `==`, `<`, `<=`, `>`, `>=`, `!=` (ASCII only: `≤`, `←`, `∞` are not in the latin font subset, §3.4) | `dist[v] = dist[u] + w` |
+| Data structures are named by what they are, with plain method verbs | `queue.enqueue(x)`, `heap.popMin()`, `visited.add(x)` |
+| Write `infinity`, not a magic number | `dist = every vertex set to infinity` |
+| `//` comments, used for the one non-obvious line only | `// mark when enqueuing` |
+| Same names and steps as the C# twin, so switching compares line by line; no language-specific APIs (`TryDequeue`, LINQ) | |
+| Syntax colors: keywords `--code-keyword`, function names `--code-type`, numbers `--code-number`, comments `--code-comment` | |
+
 **Reader footer.** A sticky footer with a 1 px `--line-subtle` top border and a primary `lg` "Practice this pattern" (`play`), in the thumb zone. It starts a practice session with the chapter's scenarios (it doesn't change review dates). Chapters without mapped scenarios show no footer.
 
-- **Do:** Keep the handbook's own words, code and diagrams; credit it on every sheet. **Don't:** Paraphrase the handbook in the app, truncate code, wrap code lines, or show the answer to the current question anywhere in the StudySheet chrome.
+- **Do:** Keep the handbook's own words, code and diagrams; credit it on every sheet. Default code blocks to pseudocode. **Don't:** Paraphrase the handbook in the app, truncate code, wrap code lines, or show the answer to the current question anywhere in the StudySheet chrome.
 
 ---
 
@@ -2367,6 +2386,7 @@ Notes:
 - The **Haptics** row is hidden when `navigator.vibrate` is missing (iOS).
 - **What we collect** opens a sheet with the privacy note. Analytics stay off until the user opts in (release checklist).
 - **Licenses** lists Inter (OFL 1.1), JetBrains Mono (OFL 1.1) and Lucide (ISC).
+- A **Study** group sits between Appearance and Privacy: "Code in Study" with a SegmentedControl **Pseudocode | C#** (default Pseudocode, §7.24).
 
 ### 8.12 End-session confirmation
 

@@ -472,6 +472,13 @@ button.li:focus-visible { outline-offset: -2px; }
 .prose code.id { font-family: var(--font-mono); font-size: 0.9em; background: var(--surface-hover); border-radius: var(--radius-xs); padding: 0 4px; font-variant-ligatures: none; }
 .prose pre { margin: 0; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line-subtle); border-radius: var(--radius-md); overflow-x: auto; font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.25rem; font-variant-ligatures: none; tab-size: 4; color: var(--fg); }
 .sheet .prose pre { background: var(--canvas); }
+.prose figure.code { margin: 0; border: 1px solid var(--line-subtle); border-radius: var(--radius-md); overflow: hidden; background: var(--surface); }
+.sheet .prose figure.code { background: var(--canvas); }
+.prose figure.code pre { border: 0; border-radius: 0; border-top: 1px solid var(--line-subtle); }
+.code-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 4px 4px 16px; min-height: 48px; }
+.seg-sm { height: 40px; padding: 4px; }
+.seg-sm button { padding: 0 10px; font-size: 0.8125rem; position: relative; }
+.seg-sm button::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 48px; transform: translateY(-50%); }
 .tok-k { color: var(--accent-fg); } .tok-t { color: var(--graphs-fg); } .tok-s { color: var(--sorting-fg); } .tok-n { color: var(--dp-fg); } .tok-c { color: var(--fg-muted); }
 .tbl { overflow-x: auto; border: 1px solid var(--line-subtle); border-radius: var(--radius-md); }
 .tbl table { border-collapse: collapse; width: 100%; font-size: 0.875rem; line-height: 1.25rem; }
@@ -718,7 +725,51 @@ function hlCs(code) {
   }
   return out + esc(code.slice(last));
 }
-const pre = code => `<pre aria-label="C# code"><code>${hlCs(code.trim())}</code></pre>`;
+function hlPs(code) {
+  const re = /(\/\/[^\n]*)|\b(function|for each|for|in|of|while|if|else|return|and|or|not|is|empty|continue|break|infinity)\b|\b(\d+)\b|\b([A-Za-z]+)(?=\()/g;
+  let out = "", last = 0, m;
+  while ((m = re.exec(code))) {
+    out += esc(code.slice(last, m.index));
+    const cls = m[1] ? "c" : m[2] ? "k" : m[3] ? "n" : "t";
+    out += `<span class="tok-${cls}">${esc(m[0])}</span>`; last = re.lastIndex;
+  }
+  return out + esc(code.slice(last));
+}
+/* CodeBlock (§7.24): Pseudocode | C# switch; the choice is global and remembered */
+const codeBlock = (cs, ps) => {
+  const lang = ps && S.codeLang === "pseudo" ? "pseudo" : "cs";
+  const seg = ps ? `<div class="seg seg-sm" role="radiogroup" aria-label="Code language">
+      <button role="radio" aria-checked="${lang === "pseudo"}" data-act="code-lang" data-arg="pseudo">Pseudocode</button>
+      <button role="radio" aria-checked="${lang === "cs"}" data-act="code-lang" data-arg="cs">C#</button></div>` : `<span class="t-caption muted">C#</span>`;
+  const body = lang === "pseudo" ? hlPs(ps.trim()) : hlCs(cs.trim());
+  return `<figure class="code"><div class="code-head"><span class="t-caption muted">${lang === "pseudo" ? "Pseudocode" : "C# · from the handbook"}</span>${ps ? seg : ""}</div>
+    <pre aria-label="${lang === "pseudo" ? "Pseudocode" : "C# code"}"><code>${body}</code></pre></figure>`;
+};
+const PS_BFS = `
+function BFS(graph, start):
+    visited = { start }
+    queue = [ start ]
+    while queue is not empty:
+        node = queue.dequeue()
+        visit(node)
+        for each neighbor in graph[node]:
+            if neighbor not in visited:
+                visited.add(neighbor)      // mark when enqueuing
+                queue.enqueue(neighbor)`;
+const PS_DIJKSTRA = `
+function Dijkstra(graph, source):
+    dist = every vertex set to infinity
+    dist[source] = 0
+    heap = min-heap ordered by distance
+    heap.push(source, 0)
+    while heap is not empty:
+        (u, d) = heap.popMin()
+        if d > dist[u]: continue           // stale entry
+        for each (v, w) in graph[u]:
+            if dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                heap.push(v, dist[v])
+    return dist`;
 const tbl = (head, rows) => `<div class="tbl" tabindex="0"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 const idc = s => `<code class="id">${esc(s)}</code>`;
 const BFS_DIAGRAM = (() => {
@@ -743,7 +794,7 @@ const STUDY = {
     <p>Rehashing is an O(n) operation, but it happens infrequently enough that insertion remains <strong>amortized O(1)</strong>.</p>` },
   "13.3": { ch: 13, title: "13.3 Graph BFS", html: () => `
     <p>Breadth-First Search explores nodes level by level. Starting from a source node, BFS first visits all nodes at distance 1, then all nodes at distance 2, and so on. This level-by-level property is what makes BFS the go-to algorithm for shortest paths in unweighted graphs.</p>
-    ${pre(`public static void Bfs(Dictionary<int, List<int>> graph, int start)
+    ${codeBlock(`public static void Bfs(Dictionary<int, List<int>> graph, int start)
 {
     var visited = new HashSet<int> { start };
     var queue = new Queue<int>();
@@ -763,7 +814,7 @@ const STUDY = {
             }
         }
     }
-}`)}
+}`, PS_BFS)}
     <p>Critical detail: we add to ${idc("visited")} when <strong>enqueuing</strong>, not when <strong>dequeuing</strong>. Otherwise the same node can be enqueued multiple times from different neighbors.</p>
     ${BFS_DIAGRAM}
     <p>BFS from node 0 visits: <strong>Level 0: {0} → Level 1: {1, 2} → Level 2: {3, 4} → Level 3: {5}</strong>.</p>` },
@@ -777,7 +828,7 @@ const STUDY = {
     <p>Dijkstra's algorithm is a <strong>greedy</strong> algorithm. It maintains a set of finalized vertices (whose shortest distances are known) and repeatedly selects the unfinalized vertex with the smallest tentative distance, finalizes it, and relaxes its outgoing edges.</p>
     <ol><li>Initialize ${idc("dist[source] = 0")}, ${idc("dist[v] = ∞")} for all others.</li><li>Insert the source into a min-heap with priority 0.</li>
     <li>While the heap is non-empty: extract the vertex ${idc("u")} with minimum distance; skip it if already finalized; for each neighbor ${idc("v")} with weight ${idc("w")}, if ${idc("dist[u] + w < dist[v]")}, update ${idc("dist[v]")} and insert ${idc("v")} into the heap.</li></ol>
-    ${pre(`var pq = new PriorityQueue<int, int>(); // (node, distance)
+    ${codeBlock(`var pq = new PriorityQueue<int, int>(); // (node, distance)
 pq.Enqueue(source, 0);
 
 while (pq.Count > 0)
@@ -794,7 +845,7 @@ while (pq.Count > 0)
             pq.Enqueue(v, newDist);
         }
     }
-}`)}
+}`, PS_DIJKSTRA)}
     <p><strong>Complexity:</strong> ${cx("O((V + E) log V)")} with a binary heap. <strong>Why negative weights break it:</strong> Dijkstra finalizes a vertex once and never revisits it.</p>` },
   "29.7": { ch: 29, title: "29.7 Pattern identification signals", html: () => tbl(["Signal in problem", "Algorithm"], [
     ["“shortest path” + non-negative weights", "Dijkstra"], ["“shortest path” + negative weights", "Bellman-Ford"],
@@ -829,7 +880,7 @@ const S = {
   haptics: true, analytics: false, bannerOff: false,
   xp: 220, streak: 12, streakDone: false, freezes: 1, sessionDone: false, resume: null,
   i: 0, phase: "q", sel: null, checked: false, res: [{}, {}, {}], sheet: null, traceView: "graph",
-  order: [], studied: [false, false, false], study: null, studyReturn: null, readerCh: 13, practice: false, read: { 13: 1 },
+  order: [], studied: [false, false, false], study: null, studyReturn: null, readerCh: 13, practice: false, read: { 13: 1 }, codeLang: "pseudo",
   guard: 0, coach: true, othersOpen: true, sum: null, toast: null
 };
 const fx = new Set(); // one-shot animation flags, cleared after each render
@@ -1227,6 +1278,10 @@ SCREENS.settings = () => {
         ${toggleRow("reduce", "Reduce motion", "", S.reduce)}
         ${canVibrate ? toggleRow("haptics", "Haptics", "", S.haptics) : ""}
       </div></div>
+      <div><p class="t-overline muted sec-label">Study</p><div class="list">
+        <div class="li li-block"><span class="li-title" id="code-l">Code in Study</span><span class="li-desc">Pseudocode is language-neutral. C# is the handbook's original code.</span>
+          <div class="seg" role="radiogroup" aria-labelledby="code-l"><button role="radio" aria-checked="${S.codeLang === "pseudo"}" data-act="code-lang" data-arg="pseudo" id="cl-pseudo">Pseudocode</button><button role="radio" aria-checked="${S.codeLang === "cs"}" data-act="code-lang" data-arg="cs" id="cl-cs">C#</button></div></div>
+      </div></div>
       <div><p class="t-overline muted sec-label">Privacy</p><div class="list">
         ${toggleRow("analytics", "Share anonymous usage", "Queued offline, sent later.", S.analytics)}
         <button class="li" data-act="toast" data-arg="privacy"><span class="li-main"><span class="li-title">What we collect</span></span>${ic("chevron-right", 20, 'style="color:var(--fg-muted)"')}</button>
@@ -1337,11 +1392,16 @@ function renderToast() {
 const app = document.getElementById("app");
 function render() {
   const focusId = document.activeElement && document.activeElement.id;
+  const viewKey = S.screen + "|" + S.sheet + "|" + S.i + S.phase;
+  const scrolls = render.key === viewKey ? [...app.querySelectorAll(".scroll")].map(e => e.scrollTop) : [];
+  render.key = viewKey;
   const screen = SCREENS[S.screen]();
   app.innerHTML = S.sheet ? screen.replace("<section ", "<section inert ") + sheetHTML() : screen;
   renderToast();
   document.getElementById("zones-root").innerHTML = S.zones ? `<div class="zones" aria-hidden="true"><div class="bottom"></div><div class="line"></div><span class="lbl">60 % · primary actions below</span></div>` : "";
   fx.clear();
+  app.querySelectorAll(".scroll").forEach((e, k) => { if (scrolls[k]) e.scrollTop = scrolls[k]; });
+  const dev = document.getElementById("device"); dev.scrollTop = 0; dev.scrollLeft = 0;
   if (focusId && document.getElementById(focusId) && app.contains(document.getElementById(focusId))) document.getElementById(focusId).focus({ preventScroll: true });
   updatePanel();
 }
@@ -1380,7 +1440,7 @@ function dockPrimary() {
   } else {
     if (Date.now() < S.guard) return;
     if (S.phase === "q") { S.phase = "v"; resetStep(); fx.add("enter"); render(); }
-    else { S.sheet = "explain"; S.othersOpen = true; fx.add("sheet"); render(); document.getElementById("sh-h")?.focus(); }
+    else { S.sheet = "explain"; S.othersOpen = true; fx.add("sheet"); render(); document.getElementById("sh-h")?.focus({ preventScroll: true }); }
   }
 }
 function nextScenario() {
@@ -1426,7 +1486,7 @@ function pick(arg) {
 function openStudy(ref, ret) {
   S.study = ref; S.studyReturn = ret || null; S.sheet = "study"; fx.add("sheet");
   if (S.screen === "session" && !S.checked && !ret) S.studied[S.i] = true;
-  render(); document.getElementById("sh-h")?.focus();
+  render(); document.getElementById("sh-h")?.focus({ preventScroll: true });
 }
 function seed(kind) {
   // Reset to a clean pre-session profile, then build the requested demo state.
@@ -1470,6 +1530,7 @@ document.addEventListener("click", e => {
       if (!CH_SECTIONS[arg]) { showToast(null, { kind: "info", icon: "book-open", msg: `Chapter ${arg} is bundled in the app, not in this demo.` }); break; }
       S.readerCh = +arg; S.read[arg] = Math.max(S.read[arg] || 0, 1); go("reader"); break;
     case "toc": e.preventDefault(); document.getElementById("sec-" + arg.replace(".", "-"))?.scrollIntoView({ behavior: S.reduce ? "auto" : "smooth" }); break;
+    case "code-lang": S.codeLang = arg; render(); break;
     case "practice-ch": startSession(CH_PRACTICE[arg], true); break;
     case "resume": Object.assign(S, S.resume.state); S.resume = null; S.screen = "session"; fx.add("enter"); render(); break;
     case "pick": pick(arg); break;
@@ -1478,7 +1539,7 @@ document.addEventListener("click", e => {
     case "coach-off": S.coach = false; render(); break;
     case "trace-view": S.traceView = S.traceView === "graph" ? "list" : "graph"; render(); document.getElementById("trace-toggle")?.focus(); break;
     case "others": S.othersOpen = !S.othersOpen; render(); document.getElementById("others-btn")?.focus(); break;
-    case "sheet": S.sheet = arg; fx.add("sheet"); render(); document.getElementById("cancel-btn")?.focus(); break;
+    case "sheet": S.sheet = arg; fx.add("sheet"); render(); document.getElementById("cancel-btn")?.focus({ preventScroll: true }); break;
     case "sheet-cancel": S.sheet = null; render(); break;
     case "end-session": {
       const sc = SC[S.i];
