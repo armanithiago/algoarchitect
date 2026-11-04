@@ -1,0 +1,9 @@
+node_modules
+dist
+dev-dist
+coverage
+.lighthouseci
+*.tsbuildinfo
+.DS_Store
+.env*
+!.env.example

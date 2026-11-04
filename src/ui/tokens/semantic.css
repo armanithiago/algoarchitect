@@ -1,0 +1,190 @@
+/* Tier 2 — semantic tokens. Components and Tailwind utilities use only these.
+   Declared on [data-theme] so a subtree (e.g. a Storybook story) can switch theme. */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  /* Surfaces */
+  --canvas: var(--gray-1);
+  --surface: var(--gray-2);
+  --surface-raised: var(--gray-3);
+  --surface-hover: var(--gray-4);
+  --surface-pressed: var(--gray-5);
+  --track: var(--gray-4);
+  /* Lines (borders, dividers) */
+  --line-subtle: var(--gray-6);
+  --line: var(--gray-7);
+  --line-strong: var(--gray-8);
+  /* Text and icons */
+  --fg: var(--gray-12);
+  --fg-secondary: var(--gray-11);
+  --fg-muted: var(--gray-10);
+  --fg-disabled: var(--gray-9);
+  /* Accent (brand, primary action, selection) */
+  --accent: var(--blue-9);
+  --accent-pressed: var(--blue-10);
+  --accent-subtle: var(--blue-3);
+  --accent-line: var(--blue-7);
+  --accent-fg: var(--blue-11);
+  --on-accent: #ffffff;
+  --focus: var(--blue-11);
+  /* Success (correct) */
+  --success: var(--green-9);
+  --success-subtle: var(--green-3);
+  --success-line: var(--green-6);
+  --success-fg: var(--green-11);
+  --on-success: var(--gray-1);
+  /* Error (wrong, destructive) */
+  --error: var(--red-9);
+  --error-pressed: var(--red-10);
+  --error-subtle: var(--red-3);
+  --error-line: var(--red-6);
+  --error-fg: var(--red-11);
+  --on-error: #ffffff;
+  /* Warning */
+  --warning: var(--amber-9);
+  --warning-subtle: var(--amber-3);
+  --warning-line: var(--amber-6);
+  --warning-fg: var(--amber-11);
+  --on-warning: var(--gray-1);
+  /* Game */
+  --streak: var(--orange-9);
+  --streak-subtle: var(--orange-3);
+  --freeze: var(--cyan-11);
+  --freeze-subtle: var(--cyan-3);
+  /* Aliases */
+  --info: var(--accent);
+  --info-subtle: var(--accent-subtle);
+  --info-line: var(--accent-line);
+  --info-fg: var(--accent-fg);
+  --xp: var(--accent);
+  /* Code syntax (Study reader, §7.24): reuse text-safe -fg tokens */
+  --code-keyword: var(--accent-fg); --code-type: var(--cyan-11); --code-string: var(--orange-11);
+  --code-number: var(--violet-11); --code-comment: var(--fg-muted);
+  /* Domains */
+  --graphs: var(--cyan-9); --graphs-subtle: var(--cyan-3); --graphs-line: var(--cyan-6); --graphs-fg: var(--cyan-11);
+  --dp: var(--violet-9); --dp-subtle: var(--violet-3); --dp-line: var(--violet-6); --dp-fg: var(--violet-11);
+  --trees: var(--lime-9); --trees-subtle: var(--lime-3); --trees-line: var(--lime-6); --trees-fg: var(--lime-11);
+  --sorting: var(--orange-9); --sorting-subtle: var(--orange-3); --sorting-line: var(--orange-6); --sorting-fg: var(--orange-11);
+  --hashing: var(--pink-9); --hashing-subtle: var(--pink-3); --hashing-line: var(--pink-6); --hashing-fg: var(--pink-11);
+  /* Elevation & overlay */
+  --scrim: rgb(0 0 0 / 0.64);
+  --elev-1: none;
+  --elev-2: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 2px 8px rgb(0 0 0 / 0.40);
+  --elev-3: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 -8px 32px rgb(0 0 0 / 0.55);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  /* Surfaces */
+  --canvas: var(--gray-1);
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-hover: var(--gray-2);
+  --surface-pressed: var(--gray-3);
+  --track: var(--gray-3);
+  /* Lines (borders, dividers) */
+  --line-subtle: var(--gray-6);
+  --line: var(--gray-7);
+  --line-strong: var(--gray-8);
+  /* Text and icons */
+  --fg: var(--gray-12);
+  --fg-secondary: var(--gray-11);
+  --fg-muted: var(--gray-10);
+  --fg-disabled: var(--gray-9);
+  /* Accent (brand, primary action, selection) */
+  --accent: var(--blue-9);
+  --accent-pressed: var(--blue-10);
+  --accent-subtle: var(--blue-3);
+  --accent-line: var(--blue-7);
+  --accent-fg: var(--blue-11);
+  --on-accent: #ffffff;
+  --focus: var(--blue-9);
+  /* Success (correct) */
+  --success: var(--green-9);
+  --success-subtle: var(--green-3);
+  --success-line: var(--green-6);
+  --success-fg: var(--green-11);
+  --on-success: var(--gray-12);
+  /* Error (wrong, destructive) */
+  --error: var(--red-9);
+  --error-pressed: var(--red-10);
+  --error-subtle: var(--red-3);
+  --error-line: var(--red-6);
+  --error-fg: var(--red-11);
+  --on-error: #ffffff;
+  /* Warning */
+  --warning: var(--amber-9);
+  --warning-subtle: var(--amber-3);
+  --warning-line: var(--amber-6);
+  --warning-fg: var(--amber-11);
+  --on-warning: var(--gray-12);
+  /* Game */
+  --streak: var(--orange-9);
+  --streak-subtle: var(--orange-3);
+  --freeze: var(--cyan-11);
+  --freeze-subtle: var(--cyan-3);
+  /* Aliases */
+  --info: var(--accent);
+  --info-subtle: var(--accent-subtle);
+  --info-line: var(--accent-line);
+  --info-fg: var(--accent-fg);
+  --xp: var(--accent);
+  /* Code syntax (Study reader, §7.24): reuse text-safe -fg tokens */
+  --code-keyword: var(--accent-fg); --code-type: var(--cyan-11); --code-string: var(--orange-11);
+  --code-number: var(--violet-11); --code-comment: var(--fg-muted);
+  /* Domains */
+  --graphs: var(--cyan-9); --graphs-subtle: var(--cyan-3); --graphs-line: var(--cyan-6); --graphs-fg: var(--cyan-11);
+  --dp: var(--violet-9); --dp-subtle: var(--violet-3); --dp-line: var(--violet-6); --dp-fg: var(--violet-11);
+  --trees: var(--lime-9); --trees-subtle: var(--lime-3); --trees-line: var(--lime-6); --trees-fg: var(--lime-11);
+  --sorting: var(--orange-9); --sorting-subtle: var(--orange-3); --sorting-line: var(--orange-6); --sorting-fg: var(--orange-11);
+  --hashing: var(--pink-9); --hashing-subtle: var(--pink-3); --hashing-line: var(--pink-6); --hashing-fg: var(--pink-11);
+  /* Elevation & overlay */
+  --scrim: rgb(23 27 33 / 0.40);
+  --elev-1: 0 1px 2px rgb(23 27 33 / 0.06);
+  --elev-2: 0 1px 2px rgb(23 27 33 / 0.06), 0 4px 12px rgb(23 27 33 / 0.08);
+  --elev-3: 0 -8px 32px rgb(23 27 33 / 0.16);
+}
+
+/* Theme-agnostic tokens */
+:root {
+  /* Motion */
+  --duration-instant: 80ms;
+  --duration-fast: 150ms;
+  --duration-base: 220ms;
+  --duration-slow: 320ms;
+  --duration-slower: 480ms;
+  --duration-celebrate: 800ms;
+  --input-guard: 350ms;
+
+  /* Layout */
+  --gutter: 1rem;
+  --size-topbar: 3.5rem;
+  --size-tabbar: 4rem;
+  --size-control-sm: 2.5rem;
+  --size-control-md: 3rem;
+  --size-control-lg: 3.5rem;
+  --size-hit: 3rem;
+
+  /* Layers */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-nav: 20;
+  --z-toast: 40;
+  --z-overlay: 50;
+  --z-coach: 60;
+}
+
+@media (min-width: 30rem) {
+  :root { --gutter: 1.5rem; }
+}
+
+/* Reduced-motion safety net (components still design their own fallbacks) */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { scroll-behavior: auto !important; }
+}
+[data-motion="reduce"] *,
+[data-motion="reduce"] ::before,
+[data-motion="reduce"] ::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+}
