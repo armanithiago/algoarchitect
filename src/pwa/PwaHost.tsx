@@ -1,9 +1,16 @@
 /**
  * CONTRACT: mounted once by src/app/providers.tsx, inside the router-less provider tree.
- * Agent A implements: service worker registration, the "Update ready" toast host, and anything
- * else PWA-related that renders UI. Renders nothing visible until an update is available.
+ * Registers the service worker and hosts the toast layer ("Update ready." toast). Renders nothing
+ * visible until a toast is shown. The future session feature calls
+ * `useToastStore.getState().setSuspended(true | false)` to hold update toasts back during a session.
  */
-// STUB: Agent A replaces this.
+import { useEffect } from "react";
+import { ToastHost } from "@/ui/components/Toast";
+import { registerPwa } from "./registerPwa";
+
 export function PwaHost() {
-  return null;
+  useEffect(() => {
+    void registerPwa();
+  }, []);
+  return <ToastHost />;
 }
