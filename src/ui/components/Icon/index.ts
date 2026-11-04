@@ -1,0 +1,1 @@
+export { IconProvider } from "./Icon";
