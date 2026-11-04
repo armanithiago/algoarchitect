@@ -79,7 +79,7 @@ describe("scenarios.v1.json trace answers", () => {
 
   it("every traceOrder answer equals the algorithm's real output", () => {
     const traces = scenarios.flatMap((s) => s.validations.filter((v) => v.type === "traceOrder"));
-    expect(traces.length).toBeGreaterThanOrEqual(1);
+    expect(traces.length).toBeGreaterThanOrEqual(3);
     const issues = checkAlgorithmAnswers(scenarios);
     expect(issues, JSON.stringify(issues, null, 2)).toEqual([]);
   });
