@@ -5,6 +5,9 @@
  * Changing the shape needs both agents' agreement: ask the orchestrator.
  */
 import { create } from "zustand";
+import { profileRepo } from "@/data/repositories/profileRepo";
+import { levelOf } from "@/domain/xp/levels";
+import { createDebouncedSaver } from "./debouncedSaver";
 
 export type CodeLanguage = "pseudo" | "cs";
 
@@ -49,10 +52,48 @@ export const initialProfile: ProfileState = {
   settings: { haptics: true, analytics: false, codeLanguage: "pseudo" },
 };
 
-// STUB: Agent C replaces the body below (persistence, hydration) and keeps the exported API above.
+export const PERSIST_DEBOUNCE_MS = 150;
+
+async function saveCurrentProfile(): Promise<void> {
+  const s = useProfileStore.getState();
+  if (!s.hydrated || s.storageBlocked) return;
+  try {
+    await profileRepo.save({
+      id: "me",
+      xp: s.xp,
+      level: levelOf(s.xp),
+      streakCount: s.streakCount,
+      longestStreak: s.longestStreak,
+      lastActiveLocalDate: s.lastActiveLocalDate,
+      freezesAvailable: s.freezesAvailable,
+      settings: s.settings,
+    });
+  } catch {
+    // Storage failed mid-session (quota, eviction, closed DB): keep working in memory.
+    useProfileStore.setState({ storageBlocked: true });
+  }
+}
+
+const saver = createDebouncedSaver(saveCurrentProfile, PERSIST_DEBOUNCE_MS);
+
+/** Writes any pending change now (called on visibilitychange/pagehide and in tests). */
+export const flushProfileSave = (): Promise<void> => saver.flush();
+/** Drops any pending write (tests / teardown). */
+export const cancelProfileSave = (): void => saver.cancel();
+
 export const useProfileStore = create<ProfileState & ProfileActions>()((set) => ({
   ...initialProfile,
-  addXp: (amount) => set((s) => ({ xp: s.xp + amount })),
-  updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
-  resetProfile: () => set({ ...initialProfile, hydrated: true }),
+  addXp: (amount) => {
+    if (!Number.isFinite(amount) || amount === 0) return;
+    set((s) => ({ xp: Math.max(0, s.xp + amount) }));
+    saver.schedule();
+  },
+  updateSettings: (patch) => {
+    set((s) => ({ settings: { ...s.settings, ...patch } }));
+    saver.schedule();
+  },
+  resetProfile: () => {
+    set((s) => ({ ...initialProfile, hydrated: true, storageBlocked: s.storageBlocked }));
+    saver.schedule();
+  },
 }));
