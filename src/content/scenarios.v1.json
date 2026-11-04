@@ -321,6 +321,1008 @@
         "social",
         "traversal"
       ]
+    },
+    {
+      "id": "graphs-003",
+      "version": 1,
+      "domain": "graphs",
+      "concept": "topological-sort",
+      "difficulty": 2,
+      "title": "Monorepo build order",
+      "prompt": "A monorepo builds targets in dependency order. A target may start only after every target it depends on has finished, and there are no cycles. Produce one valid order for the build runner.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Depth-first search preorder",
+          "rationale": "Preorder emits a target before its dependencies finish, so a target can run before something it needs."
+        },
+        {
+          "id": "b",
+          "label": "BFS from any one target",
+          "rationale": "Level order from one start ignores edge direction and can place a target before its dependency."
+        },
+        {
+          "id": "c",
+          "label": "Topological sort (Kahn)",
+          "rationale": "Emits targets with no unmet dependencies, so each runs after everything it needs. Leftover nodes reveal a cycle."
+        },
+        {
+          "id": "d",
+          "label": "Dijkstra shortest path",
+          "rationale": "Computes distances from one source; it does not produce an order that respects every dependency."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "A topological order places every target after the targets it depends on. Kahn’s algorithm repeatedly emits nodes with in-degree zero and lowers the in-degree of their dependents. If nodes are left over, the graph has a cycle. It runs in linear time.",
+      "complexity": {
+        "time": "O(V + E)",
+        "space": "O(V)"
+      },
+      "validations": [
+        {
+          "type": "traceOrder",
+          "question": "Tap the targets in the order Kahn’s algorithm emits them. Ready targets are queued in alphabetical order.",
+          "visual": {
+            "kind": "graph",
+            "caption": "Arrows point from dependency to target",
+            "nodes": [
+              {
+                "id": "cfg",
+                "label": "cfg",
+                "x": 40,
+                "y": 64
+              },
+              {
+                "id": "log",
+                "label": "log",
+                "x": 40,
+                "y": 176
+              },
+              {
+                "id": "lib",
+                "label": "lib",
+                "x": 132,
+                "y": 64
+              },
+              {
+                "id": "api",
+                "label": "api",
+                "x": 132,
+                "y": 176
+              },
+              {
+                "id": "web",
+                "label": "web",
+                "x": 224,
+                "y": 120
+              },
+              {
+                "id": "app",
+                "label": "app",
+                "x": 284,
+                "y": 120
+              }
+            ],
+            "edges": [
+              {
+                "from": "cfg",
+                "to": "lib",
+                "directed": true
+              },
+              {
+                "from": "log",
+                "to": "lib",
+                "directed": true
+              },
+              {
+                "from": "log",
+                "to": "api",
+                "directed": true
+              },
+              {
+                "from": "lib",
+                "to": "web",
+                "directed": true
+              },
+              {
+                "from": "api",
+                "to": "web",
+                "directed": true
+              },
+              {
+                "from": "web",
+                "to": "app",
+                "directed": true
+              }
+            ]
+          },
+          "algorithm": "topoKahn",
+          "tieBreak": "alphabetical",
+          "givenPrefix": 1,
+          "answer": [
+            "cfg",
+            "log",
+            "api",
+            "lib",
+            "web",
+            "app"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "15.2"
+        }
+      ],
+      "tags": [
+        "build-systems",
+        "dependencies"
+      ]
+    },
+    {
+      "id": "hashing-002",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "min-heap",
+      "difficulty": 1,
+      "title": "Job scheduler queue",
+      "prompt": "A scheduler holds thousands of pending jobs, each with a run-at time. New jobs arrive constantly, and a worker repeatedly needs the job due soonest. Pick a structure that keeps both operations cheap.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Unsorted array, scan for min",
+          "rationale": "Inserting is cheap, but finding the soonest job scans every pending job each time."
+        },
+        {
+          "id": "b",
+          "label": "Always-sorted array",
+          "rationale": "Taking the soonest job is cheap, but every insert shifts elements and costs O(n)."
+        },
+        {
+          "id": "c",
+          "label": "Hash map keyed by run time",
+          "rationale": "Great for exact lookups, but it has no order, so finding the minimum still scans all keys."
+        },
+        {
+          "id": "d",
+          "label": "Min-heap on run-at time",
+          "rationale": "Peeking is O(1), and insert and extract-min cost O(log n) without maintaining a full ordering."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "A min-heap keeps the earliest run-at time at the root, so peeking is O(1) while insert and extract-min cost O(log n). The scheduler never needs the full sorted order, only the next job, so a heap does less work than keeping everything sorted.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "A min-heap removed its root, and the last job (10) moved to the root. Which node does it swap with first?",
+          "visual": {
+            "kind": "tree",
+            "caption": "Min-heap · last job moved to the root",
+            "start": "r",
+            "nodes": [
+              {
+                "id": "r",
+                "label": "10",
+                "x": 160,
+                "y": 40
+              },
+              {
+                "id": "a",
+                "label": "5",
+                "x": 90,
+                "y": 115
+              },
+              {
+                "id": "b",
+                "label": "8",
+                "x": 230,
+                "y": 115
+              },
+              {
+                "id": "c",
+                "label": "9",
+                "x": 50,
+                "y": 190
+              },
+              {
+                "id": "d",
+                "label": "6",
+                "x": 130,
+                "y": 190
+              },
+              {
+                "id": "e",
+                "label": "12",
+                "x": 210,
+                "y": 190
+              }
+            ],
+            "edges": [
+              {
+                "from": "r",
+                "to": "a"
+              },
+              {
+                "from": "r",
+                "to": "b"
+              },
+              {
+                "from": "a",
+                "to": "c"
+              },
+              {
+                "from": "a",
+                "to": "d"
+              },
+              {
+                "from": "b",
+                "to": "e"
+              }
+            ]
+          },
+          "answerTargetId": "a"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.6"
+        }
+      ],
+      "tags": [
+        "scheduling",
+        "priority-queue"
+      ]
+    },
+    {
+      "id": "hashing-003",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "top-k-heap",
+      "difficulty": 3,
+      "title": "Trending shelf",
+      "prompt": "A feed ranks 5M posts by engagement score. The trending shelf needs only the 10 highest scores, and the job must not sort everything or keep more than a handful of candidates in memory.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Min-heap capped at size 10",
+          "rationale": "The root is the weakest of the current top 10, so a new score replaces it only if larger. O(n log k) time, O(k) space."
+        },
+        {
+          "id": "b",
+          "label": "Max-heap of all scores",
+          "rationale": "Ten pops are cheap, but the heap holds all 5M scores and breaks the memory limit."
+        },
+        {
+          "id": "c",
+          "label": "Sort all, take the first 10",
+          "rationale": "Costs O(n log n) time and holds everything, far more work than ten values need."
+        },
+        {
+          "id": "d",
+          "label": "Max-heap capped at size 10",
+          "rationale": "Its root is the largest kept score, so the smallest of the top 10, the one to evict, is not at hand."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "To keep the K largest, use a min-heap of size K. Its root is the smallest of the current top K, so each new score is compared with the root in O(1) and replaces it in O(log K). Total O(n log K) time and O(K) space, which beats sorting when K is small.",
+      "complexity": {
+        "time": "O(n log k)",
+        "space": "O(k)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "space",
+          "question": "A min-heap of size k scans a stream of n scores. How much extra space does it use?",
+          "choices": [
+            "O(1)",
+            "O(k)",
+            "O(n)",
+            "O(n^2)"
+          ],
+          "answer": "O(k)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "17.2"
+        }
+      ],
+      "tags": [
+        "ranking",
+        "streaming"
+      ]
+    },
+    {
+      "id": "dp-001",
+      "version": 1,
+      "domain": "dp",
+      "concept": "lcs",
+      "difficulty": 2,
+      "title": "Code-review diff engine",
+      "prompt": "A code-review tool diffs two versions of a file, each about 2,000 lines. It must find the largest set of lines present in both files in the same order, and show everything else as added or removed.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Greedy line matching",
+          "rationale": "Pairing each line with its first equal line can lock in an early match that blocks a longer overall one."
+        },
+        {
+          "id": "b",
+          "label": "LCS dynamic programming",
+          "rationale": "Builds the longest common subsequence from shared sub-results, so the best order-preserving match is guaranteed."
+        },
+        {
+          "id": "c",
+          "label": "Sort both files and compare",
+          "rationale": "Sorting destroys line order, which is exactly what a diff has to preserve."
+        },
+        {
+          "id": "d",
+          "label": "Compare sets of line hashes",
+          "rationale": "Sets ignore order and repeats, so moved or duplicated lines are matched wrongly."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "A diff is the complement of the longest common subsequence. LCS has overlapping subproblems: dp[i][j] depends on dp[i-1][j-1], dp[i-1][j] and dp[i][j-1]. The table costs O(n m) time and space. Production tools refine this, for example with Myers’ algorithm.",
+      "complexity": {
+        "time": "O(n m)",
+        "space": "O(n m)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "LCS of two files with n lines each, filling the full dp table. What is the time?",
+          "choices": [
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(n^3)",
+            "O(2^n)"
+          ],
+          "answer": "O(n^2)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.9"
+        }
+      ],
+      "tags": [
+        "diff",
+        "strings"
+      ]
+    },
+    {
+      "id": "dp-002",
+      "version": 1,
+      "domain": "dp",
+      "concept": "knapsack",
+      "difficulty": 3,
+      "title": "Campaign budget picker",
+      "prompt": "A growth team has 200 candidate campaigns, each with an integer cost in $1k and a predicted signup gain. The budget is $500k. A campaign runs in full or not at all. Maximize the total predicted gain.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Greedy by gain per dollar",
+          "rationale": "Taking the best ratios first can fill the budget badly, because a campaign cannot be split."
+        },
+        {
+          "id": "b",
+          "label": "Greedy by highest gain",
+          "rationale": "Takes expensive campaigns first and can burn most of the budget on one big pick."
+        },
+        {
+          "id": "c",
+          "label": "0/1 knapsack DP",
+          "rationale": "Tracks the best gain for each budget spent, so every in-or-out choice is compared exactly."
+        },
+        {
+          "id": "d",
+          "label": "Plain recursion over subsets",
+          "rationale": "Correct, but it tries up to 2^200 subsets, far beyond any time limit."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Campaigns are indivisible, so ratio greedy can fail; it is only optimal for fractional knapsack. The 0/1 knapsack DP keeps best[w], the highest gain within budget w, and handles each campaign once with the budget scanned downward. Time O(n W) is pseudo-polynomial in the budget.",
+      "complexity": {
+        "time": "O(nW)",
+        "space": "O(W)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "0/1 knapsack with n items and integer budget W, filled as a table. What is the time?",
+          "choices": [
+            "O(n)",
+            "O(n log n)",
+            "O(nW)",
+            "O(2^n)"
+          ],
+          "answer": "O(nW)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.7"
+        }
+      ],
+      "tags": [
+        "budgeting",
+        "optimization"
+      ]
+    },
+    {
+      "id": "dp-003",
+      "version": 1,
+      "domain": "dp",
+      "concept": "memoization",
+      "difficulty": 1,
+      "title": "Travel pass calculator",
+      "prompt": "A calculator finds the cheapest way to cover a year of travel days with 1-day, 7-day and 30-day passes. The plain recursive version freezes on a full year because it keeps revisiting the same days.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Memoize on the day index",
+          "rationale": "Many pass choices reach the same day, so caching the cheapest cost per day computes each state once."
+        },
+        {
+          "id": "b",
+          "label": "Binary search on the cost",
+          "rationale": "Testing a cost guess needs the cheapest cover anyway, so it adds work without removing any."
+        },
+        {
+          "id": "c",
+          "label": "Always buy the 30-day pass",
+          "rationale": "Overpays when travel days are sparse; the cheapest-looking pass now can lose overall."
+        },
+        {
+          "id": "d",
+          "label": "Plain divide and conquer",
+          "rationale": "Subproblems overlap heavily, so splitting without a cache repeats the same work exponentially."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "The cheapest cost from day i depends only on i, and many pass choices lead to the same later day. Memoizing cost(i) turns an exponential recursion into one computation per calendar day, so O(n) time and O(n) space for n days.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Memoized cost(day) over n calendar days, trying three passes per day. What is the time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.2"
+        }
+      ],
+      "tags": [
+        "pricing",
+        "memoization"
+      ]
+    },
+    {
+      "id": "trees-001",
+      "version": 1,
+      "domain": "trees",
+      "concept": "trie",
+      "difficulty": 2,
+      "title": "Search box autocomplete",
+      "prompt": "A search box suggests completions on every keystroke from 2M product names. New names are added all day, and suggestions must start from exactly what the user has typed so far.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Hash map of full names",
+          "rationale": "Exact lookup is O(1), but a prefix is not a key, so finding matches means scanning every name."
+        },
+        {
+          "id": "b",
+          "label": "Linear scan with startsWith",
+          "rationale": "Touches all 2M names on every keystroke, far too slow for typing."
+        },
+        {
+          "id": "c",
+          "label": "Sorted array + binary search",
+          "rationale": "Finds the prefix range fast, but each new name shifts O(n) elements to stay sorted."
+        },
+        {
+          "id": "d",
+          "label": "Trie (prefix tree)",
+          "rationale": "Follows one node per typed character, then lists the subtree. Cost tracks prefix length, not name count."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "A trie stores names along shared character paths. Following the typed prefix costs O(L) for prefix length L, whatever the number of names, and the completions are the subtree under that node. Inserting a name is O(L) too. The price is memory for the many nodes.",
+      "complexity": {
+        "time": "O(L)",
+        "space": "O(n L)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "A trie holds n words. What is the time to check whether one word of length L is stored?",
+          "choices": [
+            "O(1)",
+            "O(L)",
+            "O(n)",
+            "O(n L)"
+          ],
+          "answer": "O(L)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "25.1"
+        },
+        {
+          "sectionId": "2.8"
+        }
+      ],
+      "tags": [
+        "autocomplete",
+        "search"
+      ]
+    },
+    {
+      "id": "trees-002",
+      "version": 1,
+      "domain": "trees",
+      "concept": "inorder-traversal",
+      "difficulty": 2,
+      "title": "Sorted booking report",
+      "prompt": "A booking service keeps reservations in a binary search tree keyed by start time. Ops needs a report of every reservation in ascending start-time order, without adding a separate sort step.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Preorder traversal",
+          "rationale": "Visits a node before its subtrees, so the root comes out first and the output is not sorted."
+        },
+        {
+          "id": "b",
+          "label": "In-order traversal",
+          "rationale": "Visits left subtree, node, then right subtree, which yields a BST’s keys in ascending order."
+        },
+        {
+          "id": "c",
+          "label": "Postorder traversal",
+          "rationale": "Visits children before the parent, so the root comes out last and the output is not sorted."
+        },
+        {
+          "id": "d",
+          "label": "Level-order (BFS) traversal",
+          "rationale": "Reads one level at a time, so keys from different levels interleave out of order."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "In a BST every key in the left subtree is smaller and every key in the right subtree is larger. Visiting left, node, right therefore emits keys in ascending order. A full traversal takes O(n) time and O(h) stack space for a tree of height h.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(h)"
+      },
+      "validations": [
+        {
+          "type": "traceOrder",
+          "question": "Tap the nodes in in-order traversal: left subtree, node, right subtree.",
+          "visual": {
+            "kind": "tree",
+            "caption": "BST keyed by start time",
+            "start": "50",
+            "nodes": [
+              {
+                "id": "50",
+                "label": "50",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "30",
+                "label": "30",
+                "x": 90,
+                "y": 96
+              },
+              {
+                "id": "80",
+                "label": "80",
+                "x": 230,
+                "y": 96
+              },
+              {
+                "id": "20",
+                "label": "20",
+                "x": 50,
+                "y": 154
+              },
+              {
+                "id": "40",
+                "label": "40",
+                "x": 130,
+                "y": 154
+              },
+              {
+                "id": "70",
+                "label": "70",
+                "x": 200,
+                "y": 154
+              },
+              {
+                "id": "60",
+                "label": "60",
+                "x": 160,
+                "y": 212
+              }
+            ],
+            "edges": [
+              {
+                "from": "50",
+                "to": "30"
+              },
+              {
+                "from": "50",
+                "to": "80"
+              },
+              {
+                "from": "30",
+                "to": "20"
+              },
+              {
+                "from": "30",
+                "to": "40"
+              },
+              {
+                "from": "80",
+                "to": "70"
+              },
+              {
+                "from": "70",
+                "to": "60"
+              }
+            ]
+          },
+          "algorithm": "inorder",
+          "tieBreak": "authored",
+          "givenPrefix": 1,
+          "answer": [
+            "20",
+            "30",
+            "40",
+            "50",
+            "60",
+            "70",
+            "80"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "11.3"
+        }
+      ],
+      "tags": [
+        "bst",
+        "reporting"
+      ]
+    },
+    {
+      "id": "trees-003",
+      "version": 1,
+      "domain": "trees",
+      "concept": "balanced-bst",
+      "difficulty": 2,
+      "title": "Order book price index",
+      "prompt": "An order book keeps open orders in a BST keyed by price and answers range queries such as “bids between 99.10 and 99.30”. Prices arrive nearly sorted, and lookups slowed badly after a trending hour.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Keep the unbalanced BST",
+          "rationale": "Nearly sorted inserts grow one long chain, so every operation drifts toward O(n)."
+        },
+        {
+          "id": "b",
+          "label": "Hash map keyed by price",
+          "rationale": "Exact lookup is O(1), but a hash map has no order, so range queries scan everything."
+        },
+        {
+          "id": "c",
+          "label": "Red-black (balanced) BST",
+          "rationale": "Rotations keep the height O(log n) for any insert order, and in-order traversal still serves range queries."
+        },
+        {
+          "id": "d",
+          "label": "Min-heap on price",
+          "rationale": "Returns the lowest price fast, but offers no ordered search or range query."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Nearly sorted inserts turn a plain BST into a linked list with O(n) operations. A self-balancing tree such as a red-black or AVL tree rebalances with rotations, so search, insert and delete stay O(log n), and sorted iteration still answers range queries.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Insert n keys in increasing order into a plain, unbalanced BST. What is the total time?",
+          "choices": [
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(n^3)"
+          ],
+          "answer": "O(n^2)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.5"
+        }
+      ],
+      "tags": [
+        "ordered-set",
+        "trading"
+      ]
+    },
+    {
+      "id": "sorting-001",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "binary-search",
+      "difficulty": 1,
+      "title": "Pagination cursor lookup",
+      "prompt": "An API pages through 80M rows stored sorted by created_at. A client sends the timestamp of the last row it saw, and you must find where to resume without scanning from the start.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Binary search on created_at",
+          "rationale": "Each probe halves the remaining range, so about 27 probes cover 80M rows."
+        },
+        {
+          "id": "b",
+          "label": "Linear scan from the start",
+          "rationale": "Reads up to 80M rows per request, so cost grows with the table."
+        },
+        {
+          "id": "c",
+          "label": "Hash map from time to row",
+          "rationale": "Needs an exact key and has no order, so a cursor between stored times finds nothing."
+        },
+        {
+          "id": "d",
+          "label": "Sort the table per request",
+          "rationale": "Re-sorting 80M rows each call costs O(n log n), and the data is already sorted."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "The rows are sorted, so a probe at the midpoint rules out half the remaining range. Binary search finds the first row after the cursor in O(log n) probes, about 27 for 80M rows, using O(1) extra space. Sorted input is the precondition.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "traceOrder",
+          "question": "Binary search for 22 in the sorted array. Probe mid = floor((lo + hi) / 2). Tap the probes in order.",
+          "visual": {
+            "kind": "array",
+            "caption": "Sorted by created_at (minutes)",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "4"
+              },
+              {
+                "id": "c1",
+                "label": "9"
+              },
+              {
+                "id": "c2",
+                "label": "15"
+              },
+              {
+                "id": "c3",
+                "label": "22"
+              },
+              {
+                "id": "c4",
+                "label": "31"
+              },
+              {
+                "id": "c5",
+                "label": "38"
+              },
+              {
+                "id": "c6",
+                "label": "46"
+              },
+              {
+                "id": "c7",
+                "label": "57"
+              },
+              {
+                "id": "c8",
+                "label": "63"
+              }
+            ]
+          },
+          "algorithm": "binarySearch",
+          "tieBreak": "authored",
+          "givenPrefix": 1,
+          "answer": [
+            "c4",
+            "c1",
+            "c2",
+            "c3"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "8.2"
+        }
+      ],
+      "tags": [
+        "pagination",
+        "database"
+      ]
+    },
+    {
+      "id": "sorting-002",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "external-merge-sort",
+      "difficulty": 2,
+      "title": "Nightly log sort",
+      "prompt": "A nightly job sorts 200 GB of log lines by timestamp on a machine with 8 GB of RAM and fast sequential disk reads. The output must be a single globally sorted file.",
+      "options": [
+        {
+          "id": "a",
+          "label": "In-memory quicksort",
+          "rationale": "Needs the whole dataset in RAM or heavy random disk access, and 200 GB does not fit in 8 GB."
+        },
+        {
+          "id": "b",
+          "label": "Heapsort over the full file",
+          "rationale": "In-place and O(n log n), but its random access pattern is slow on disk and the data still exceeds RAM."
+        },
+        {
+          "id": "c",
+          "label": "Insertion sort on arrival",
+          "rationale": "O(n^2) comparisons and shifting make 200 GB impractical regardless of memory."
+        },
+        {
+          "id": "d",
+          "label": "External merge sort",
+          "rationale": "Sorts RAM-sized chunks into runs, then k-way merges the runs with sequential reads."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "External merge sort sorts RAM-sized chunks into runs on disk, then merges the runs with a k-way merge that reads each run sequentially. It takes O(n log n) time, can be made stable, and its disk access is sequential, which suits very large files.",
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "Merging two sorted runs, 8 12 19 and 4 15 21. Which element is written to the output first?",
+          "visual": {
+            "kind": "array",
+            "caption": "Run 1: 8, 12, 19 · Run 2: 4, 15, 21",
+            "cells": [
+              {
+                "id": "r1",
+                "label": "8"
+              },
+              {
+                "id": "r2",
+                "label": "12"
+              },
+              {
+                "id": "r3",
+                "label": "19"
+              },
+              {
+                "id": "s1",
+                "label": "4"
+              },
+              {
+                "id": "s2",
+                "label": "15"
+              },
+              {
+                "id": "s3",
+                "label": "21"
+              }
+            ]
+          },
+          "answerTargetId": "s1"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "9.2"
+        }
+      ],
+      "tags": [
+        "external-sort",
+        "logs"
+      ]
+    },
+    {
+      "id": "sorting-003",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "quickselect",
+      "difficulty": 3,
+      "title": "p95 latency per second",
+      "prompt": "A metrics service keeps 10M unordered request latencies in memory and recomputes the p95 every second. Only that one value is needed, not the sorted list, so the work should stay linear.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Sort, then index at 95%",
+          "rationale": "Correct but O(n log n); it orders everything when only one rank is wanted."
+        },
+        {
+          "id": "b",
+          "label": "Quickselect, random pivot",
+          "rationale": "Partitions and recurses into one side only: O(n) expected, with no full ordering built."
+        },
+        {
+          "id": "c",
+          "label": "Max-heap of all latencies",
+          "rationale": "Popping the top 5% costs about 0.05n log n, so it still grows as n log n."
+        },
+        {
+          "id": "d",
+          "label": "Binary search the array",
+          "rationale": "Binary search needs sorted input, and these values are unordered."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Only one rank is needed, so a full sort does extra work. Quickselect partitions like quicksort but recurses into just the side that holds the target rank, giving O(n) expected time with a random pivot. The worst case is O(n^2), and it reorders the array in place.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Quickselect with a random pivot finds one rank in n values. What is the expected time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "17.5"
+        }
+      ],
+      "tags": [
+        "percentiles",
+        "metrics"
+      ]
     }
   ]
 }
