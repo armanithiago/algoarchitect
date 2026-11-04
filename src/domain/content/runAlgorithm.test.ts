@@ -6,7 +6,7 @@ import {
 } from "./runAlgorithm";
 
 const node = (id: string, x = 100, y = 100) => ({ id, label: id, x, y });
-const graph = (edges: [string, string, number?][], ids: string[], extra: Partial<Extract<Visual, { kind: "graph" }>> = {}): Visual => ({
+const graph = (edges: [string, string, number?][], ids: string[], extra: { start?: string } = {}): Visual => ({
   kind: "graph",
   nodes: ids.map((id) => node(id)),
   edges: edges.map(([from, to, weight]) => ({ from, to, ...(weight ? { weight } : {}) })),
