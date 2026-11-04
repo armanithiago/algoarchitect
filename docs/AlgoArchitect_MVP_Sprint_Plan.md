@@ -1,7 +1,7 @@
 # AlgoArchitect — MVP Sprint Plan
 
 > Source: *Product Requirements Document (PRD): AlgoArchitect*
-> Version: 1.0 · Created: 2026-11-04 · Status: Draft for team review
+> Version: 1.1 · Created: 2026-11-04 · Updated: 2026-11-04 (adds the ordered-trace challenge and the Study area; MVP moves to Feb 26, 2027) · Status: Draft for team review
 
 ---
 
@@ -12,12 +12,13 @@
 | Product | AlgoArchitect: a mobile-first, offline-first PWA that trains engineers to match real-world architecture scenarios to algorithms and data structures |
 | Team | Small team (2–4 people). The plan assumes **3 developers** plus a part-time designer/content reviewer |
 | Cadence | **2-week sprints**, Monday → Friday of the following week |
-| Sprints | Sprint 0 + Sprints 1–5 (6 sprints, 12 working weeks) |
+| Sprints | Sprint 0 + Sprints 1–6 (7 sprints, 14 working weeks) |
 | Start | **Mon 2026-11-09** |
 | Holiday break | **Mon 2026-12-21 → Fri 2027-01-01** (no sprint) |
-| MVP delivery | **Fri 2027-02-12** |
+| MVP delivery | **Fri 2027-02-26** (moved from Feb 12 to add the Study area and the ordered-trace challenge) |
 | Stack | React 18 + Vite + TypeScript, Workbox (`vite-plugin-pwa`), Zustand, Dexie (IndexedDB), Tailwind CSS, Vitest + Testing Library, Playwright |
 | Backend | **None for the MVP.** All progress stays on the device. Cloud sync and accounts come after the MVP |
+| Study content | The [Patterns Handbook](https://github.com/armanithiago/patterns-handbook) (30 chapters + 4 appendices), converted at build time and **bundled offline** |
 | Hosting | Static hosting with HTTPS (Netlify / Vercel / GitHub Pages / Cloudflare Pages) |
 
 ### 1.1 Timeline at a glance
@@ -30,12 +31,13 @@
 | — | Dec 21, 2026 – Jan 01, 2027 | Holiday break | — | — |
 | Sprint 3 | Jan 04 – Jan 15, 2027 | Mini-validations & full content set | Phase 2 | M3: Content complete (50 scenarios) |
 | Sprint 4 | Jan 18 – Jan 29, 2027 | Progression: spaced repetition, levels, streaks | Phase 3 | M4: Feature complete |
-| Sprint 5 | Feb 01 – Feb 12, 2027 | Hardening, beta & launch | Release | **M5: MVP released** |
+| Sprint 5 | Feb 01 – Feb 12, 2027 | Study area & ordered trace | Phase 2+ (new) | M5: Study-then-solve loop complete |
+| Sprint 6 | Feb 15 – Feb 26, 2027 | Hardening, beta & launch | Release | **M6: MVP released** |
 
 ```
 Nov 2026          Dec 2026              Jan 2027              Feb 2027
-|--S0--|--S1--|--S2--|::break::|--S3--|--S4--|--S5--|
- 09    23     07     21        04     18     01    12 ★ MVP
+|--S0--|--S1--|--S2--|::break::|--S3--|--S4--|--S5--|--S6--|
+ 09    23     07     21        04     18     01     15    26 ★ MVP
 ```
 
 ---
@@ -56,9 +58,10 @@ Nov 2026          Dec 2026              Jan 2027              Feb 2027
 1. **PWA shell**: installable, service worker, offline caching, app manifest and icons.
 2. **One-handed mobile UI**: bottom-anchored actions, large tap targets, works in portrait from 360 px wide.
 3. **Scenario Matching**: a scenario or constraint with 3–4 candidate approaches. The user picks one and sees an explanation.
-4. **Mini-Validation**, two interaction types:
+4. **Mini-Validation**, three interaction types:
    - **Big-O selection**: pick the time or space complexity.
    - **Trace-first-step**: tap the node, cell or element the algorithm visits or processes first.
+   - **Trace-order** (new): tap the nodes, cells or elements in the order the algorithm visits them (for example BFS or DFS order, binary-search probes, an in-order traversal). Taps are numbered, the last tap can be undone, and the verdict is shown per position.
 5. **Content**: **50 hardcoded scenarios**, 10 for each of the 5 domains (Graphs & Routing, Dynamic Programming, Trees & Tries, Sorting & Searching, Hashing & Heaps).
 6. **Session engine**: daily session made of due reviews plus new scenarios, with a session summary.
 7. **Spaced repetition**: SM-2-style scheduler for each scenario and concept.
@@ -67,7 +70,9 @@ Nov 2026          Dec 2026              Jan 2027              Feb 2027
 10. **Stats screen**: accuracy per domain, weakest concepts, streak, level.
 11. **Local persistence**: IndexedDB (Dexie) with a schema version and migrations.
 12. **Data portability**: export and import progress as JSON. This protects users while there is no cloud sync.
-13. **Privacy-friendly analytics**, optional. Events are queued offline and flushed when back online. The PRD's "sync when back online" is reduced to this for the MVP.
+13. **Privacy-friendly analytics**, optional and a stretch goal (E4-08). Events are queued offline and flushed when back online. The PRD's "sync when back online" is reduced to this for the MVP.
+14. **Study area** (new): a fourth tab with the Patterns Handbook bundled offline. A library grouped by the handbook's parts, a chapter reader (prose, highlighted C#, tables, diagrams), reading progress, and **Practice this pattern** from any chapter that has scenarios.
+15. **Study then solve** (new): every question and check has a **Study** button that opens the linked handbook section in a sheet, without losing the current answer. Answering after studying still counts: it earns half the match XP and the scenario comes back the next day (§4.4). Every explanation also links to its handbook section.
 
 ### 2.3 Out of scope (after the MVP)
 
@@ -75,7 +80,9 @@ Nov 2026          Dec 2026              Jan 2027              Feb 2027
 - Leaderboards, social or sharing features.
 - Content CMS or authoring UI. Content is a versioned JSON file in the repo.
 - Procedurally generated scenarios. The "scenario generator" in the MVP **selects and shuffles** authored scenarios and does not create new ones.
-- Push notifications for streak reminders (possibly a stretch goal in Sprint 5).
+- Push notifications for streak reminders (possibly a stretch goal in Sprint 6).
+- Practice a single domain from Home (E3-09). It is superseded in the MVP by **Practice this pattern** in the Study area (E6-09).
+- Notes, highlights or bookmarks in the Study area, and handbook code samples in languages other than C#.
 - Localization. The MVP is English only, but strings are kept in i18n files.
 - Native app-store builds.
 
@@ -147,6 +154,7 @@ src/
     scenario/     # Scenario Matching UI
     validation/   # Big-O picker, Trace-first-step components
     progress/     # stats screen, level & streak widgets
+    study/        # Study tab: library, chapter reader, StudySheet
     settings/     # export/import, reset, analytics opt-in
   domain/
     srs/          # spaced-repetition scheduler (pure TS)
@@ -158,6 +166,9 @@ src/
     repositories/ # progress, reviews, events
   content/
     scenarios.v1.json
+    study.lock.json   # pinned patterns-handbook version (§4.6)
+scripts/
+  study/build.ts      # handbook → public/study/*.json (§4.6)
   sw/             # Workbox config / custom SW logic
 ```
 
@@ -180,23 +191,40 @@ interface Scenario {
   correctOptionId: string;
   explanation: string;        // why the best answer wins, trade-offs
   validations: Validation[];  // 1–2 mini-validation steps
+  study: StudyRef[];          // 1–2 handbook sections that teach this scenario (new)
   tags: string[];
 }
 
 type Validation =
-  | { type: 'bigO'; question: string; choices: string[]; answer: string }
+  | { type: 'bigO'; question: string; choices: string[]; answer: string; measure?: 'time' | 'space' }
   | { type: 'traceFirstStep'; question: string;
-      visual: GraphVisual | ArrayVisual | TreeVisual; answerTargetId: string };
+      visual: GraphVisual | ArrayVisual | TreeVisual; answerTargetId: string }
+  | { type: 'traceOrder'; question: string;           // new
+      visual: GraphVisual | ArrayVisual | TreeVisual;
+      algorithm: 'bfs' | 'dfs' | 'dijkstra' | 'binarySearch' | 'inorder' | 'preorder' | 'postorder' | 'topoKahn';
+      tieBreak: 'alphabetical' | 'authored';          // stated in the question text
+      givenPrefix: number;                            // leading targets pre-filled (usually 1: the start)
+      answer: string[] };                             // full expected sequence of target ids
+
+interface StudyRef {
+  sectionId: string;          // e.g. "29.2" — stable id produced by the handbook build (§4.6)
+  label?: string;             // optional override for the link text
+}
 ```
+
+Content CI rules added for the new fields:
+- Every `study.sectionId` exists in the current handbook bundle.
+- `traceOrder`: the CI **runs the named algorithm** on the visual with the stated tie-break and fails unless the result equals `answer` (no ambiguous orders). `answer` has 3–8 entries and the question text states the tie-break rule.
 
 ### 4.3 Local data model (IndexedDB via Dexie)
 
 | Store | Key | Fields |
 |---|---|---|
 | `reviews` | `scenarioId` | `easiness`, `intervalDays`, `repetitions`, `dueAt`, `lapses`, `lastResult` |
-| `attempts` | auto-increment | `scenarioId`, `concept`, `domain`, `correct`, `validationResults`, `durationMs`, `timestamp` |
+| `attempts` | auto-increment | `scenarioId`, `concept`, `domain`, `correct`, `validationResults`, `studied`, `durationMs`, `timestamp` |
 | `profile` | `'me'` | `xp`, `level`, `streakCount`, `longestStreak`, `lastActiveLocalDate`, `freezesAvailable`, `settings` |
 | `eventQueue` | auto-increment | analytics events waiting to be flushed when online |
+| `reading` (new) | `chapterId` | `lastSectionId`, `sectionsRead[]`, `scrollPct`, `updatedAt` |
 | `meta` | key | `schemaVersion`, `contentVersion`, `installedAt` |
 
 LocalStorage holds only tiny UI preferences such as theme. All game state lives in IndexedDB.
@@ -207,6 +235,7 @@ LocalStorage holds only tiny UI preferences such as theme. All game state lives 
 - Map each answer to a quality score `q` (0–5). Wrong match = 1. Correct match but a failed validation = 3. Everything correct = 4. Everything correct and fast (< 15 s) = 5.
 - `q < 3` → `repetitions = 0`, `interval = 1 day`, `lapses++`.
 - Otherwise the interval goes 1 → 3 → `round(prev × easiness)`, and `easiness = max(1.3, EF + 0.1 − (5−q)(0.08 + (5−q)·0.02))`.
+- **Studied first** (the user opened Study before Check): `q` is capped at 3, so a correct answer comes back the next day instead of jumping to 3 days. A wrong answer after studying is still `q = 1`.
 - Concept weakness = rolling accuracy of the last 5 attempts for that concept. It feeds new-scenario selection.
 
 **Daily session composition**
@@ -214,7 +243,8 @@ LocalStorage holds only tiny UI preferences such as theme. All game state lives 
 - If nothing is due and nothing is new, run a practice session that does not affect the SRS.
 
 **XP & levels**
-- Correct match +10 XP, each correct validation +5 XP, first-try bonus +5, session completion +20.
+- Correct match +10 XP (**+5 when studied first**), each correct validation +5 XP, first-try bonus +5 (not when studied first), session completion +20.
+- A `traceOrder` validation passes only when every position is right. The explanation reports "k of n in place" so a near miss is visible, but there is no partial XP.
 - Level threshold: `xpForLevel(n) = 50 × n × (n + 1)` (L1 = 100, L2 = 300, L3 = 600, …).
 - Difficulty-2 scenarios unlock at Level 3, difficulty-3 at Level 6.
 
@@ -226,9 +256,22 @@ LocalStorage holds only tiny UI preferences such as theme. All game state lives 
 ### 4.5 Offline strategy
 
 - **Precache** the app shell, JS/CSS bundles, fonts, icons and `scenarios.v1.json` at install time.
+- **Study bundle:** the per-chapter handbook files (§4.6) are precached in the background after the first session, so they never compete with the first load. Until then a chapter is fetched on demand and cached.
 - **Runtime:** stale-while-revalidate for static assets. There are no runtime API calls in the MVP except the optional analytics flush.
 - **Updates:** a "New version available — tap to refresh" toast. The app never interrupts an active session.
 - **Analytics:** events are written to `eventQueue` and flushed on `online` or `visibilitychange` events, in batches with retry and backoff.
+
+### 4.6 Study content pipeline (new)
+
+The Study area is generated from [`armanithiago/patterns-handbook`](https://github.com/armanithiago/patterns-handbook) (`content/programming-patterns-handbook.md`, ~579 KB of Markdown, 16,209 lines, 333 C# code blocks, 116 Mermaid diagrams).
+
+1. **Pin a version.** The app repo pins a handbook commit or tag (`study.lock.json`). Updating it is a normal PR, so content changes are reviewed and versioned like scenarios.
+2. **Parse and normalize.** `scripts/study/build.ts` reads the Markdown and splits it into chapters and sections. The handbook's heading levels are not uniform: some chapters are `#` headings, others are `##` headings under `# Stage N` wrappers, and some sections are `##` while others (Chapter 29) are `###`. The parser identifies chapters by the `Chapter N:` pattern and sections by the `N.M` number, whatever the heading level, and drops the `Stage` wrappers. Appendices become chapters A–D.
+3. **Stable ids.** Chapters get `ch13`; sections get their number (`13.3`). Scenario `study.sectionId` values point at these, and the content CI fails on a missing id.
+4. **Render at build time.** Markdown becomes HTML with `marked`; C# is highlighted with `highlight.js` into token classes that map to the design-system syntax colors; tables keep a scroll wrapper. **Mermaid is pre-rendered to SVG** in CI (`@mermaid-js/mermaid-cli`), then post-processed so strokes and text use `currentColor` and the design tokens, so diagrams follow both themes and need no runtime library. Emoji in headings are stripped.
+5. **Output.** `public/study/index.json` (parts, chapters, section titles, word counts, domain mapping) plus one `public/study/ch-XX.json` per chapter. Budget: ≤ 400 KB gzipped for the whole bundle. Nothing of it is in the initial JS bundle.
+6. **Domain mapping.** A small hand-maintained table maps chapters to the five app domains (for example Ch. 13, 14, 15, 27, 29 → Graphs; Ch. 22 → DP), so library rows show domain dots and **Practice this pattern** knows which scenarios to pull.
+7. **Snapshot tests** on a few chapters catch handbook format changes before they reach users.
 
 ---
 
@@ -271,7 +314,7 @@ Estimates are in story points (SP). Priorities follow MoSCoW: **M**ust, **S**hou
 | E3-06 | Record each attempt to IndexedDB | M | 2 |
 | E3-07 | As a user, I see a session summary (score, XP placeholder, concepts covered) | M | 3 |
 | E3-08 | As a user, I can resume an interrupted session after closing the app | S | 3 |
-| E3-09 | As a user, I can practice a single domain on demand | C | 2 |
+| ~~E3-09~~ | ~~As a user, I can practice a single domain on demand~~ — moved to v1.1, superseded by E6-09 | — | — |
 | E3-10 | **Mini-Validation: Big-O picker** (time and/or space) | M | 3 |
 | E3-11 | **Mini-Validation: Trace-first-step**, with graph, array and tree visuals in SVG | M | 8 |
 | E3-12 | Make the validation components accessible (keyboard and screen reader, with a non-visual alternative for trace) | M | 3 |
@@ -289,9 +332,22 @@ Estimates are in story points (SP). Priorities follow MoSCoW: **M**ust, **S**hou
 | E4-05 | Build daily streaks with local-day rollover, freezes and clock-skew safety | M | 5 |
 | E4-06 | As a user, I see a Stats screen (accuracy per domain, weakest concepts, streak, level) | M | 5 |
 | E4-07 | As a user, I see "X reviews due today" on Home | S | 1 |
-| E4-08 | Add an offline analytics event queue and flush on reconnect (opt-in) | S | 3 |
+| E4-08 | Add an offline analytics event queue and flush on reconnect (opt-in). **Stretch**: if it misses Sprint 4 it moves to v1.1 and the Settings row is hidden | S | 3 |
 
-### Epic E5 — Hardening & Launch (Sprint 5)
+### Epic E6 — Study Area & Ordered Trace (Sprint 5, new)
+| ID | Story | Pri | SP |
+|---|---|---|---|
+| E6-01 | Build the handbook pipeline: pin version, parse and normalize headings, stable ids, Markdown → HTML, C# highlighting, per-chapter JSON (§4.6) | M | 5 |
+| E6-02 | Pre-render the 116 Mermaid diagrams to themed SVG in CI | M | 3 |
+| E6-03 | As a user, I see a Study tab with the handbook library grouped by part, domain dots, reading progress and "Continue reading" | M | 3 |
+| E6-04 | As a user, I read a chapter: section chips, prose, code, tables, diagrams; my position is remembered | M | 5 |
+| E6-05 | As a user, I can open **Study** mid-question in a sheet and come back to the same answer; studied answers are graded as in §4.4 | M | 3 |
+| E6-06 | Content: link all 50 scenarios to 1–2 handbook sections, with the CI id check | M | 2 |
+| E6-07 | **Mini-Validation: Trace-order**: numbered taps, undo, per-position verdict, list-view alternative; reuses TraceCanvas (E3-11) | M | 3 |
+| E6-08 | Content: add a trace-order validation to 10 scenarios, with the CI "run the algorithm" uniqueness check | M | 2 |
+| E6-09 | As a user, I can start **Practice this pattern** from a chapter (concept-filtered practice that doesn't change review dates) | S | 2 |
+
+### Epic E5 — Hardening & Launch (Sprint 6)
 | ID | Story | Pri | SP |
 |---|---|---|---|
 | E5-01 | As a user, I can export and import my progress as JSON | M | 3 |
@@ -304,7 +360,10 @@ Estimates are in story points (SP). Priorities follow MoSCoW: **M**ust, **S**hou
 | E5-08 | Production deploy, custom domain, privacy note, release notes `v1.0.0` | M | 2 |
 | E5-09 | Optional streak reminder with the local Notification API | C | 3 |
 
-**Total MVP (Must + Should): about 150 SP.** Capacity is about 6 × 24 = 144 SP, so the **Could** items (E3-09, E5-09) are the scope buffer and get cut first.
+**Total MVP (Must + Should): about 177 SP** (149 before + 28 for E6). Capacity is about 7 × 24 = 168 SP. The plan therefore depends on two stretch items and one cut line:
+- **Stretch:** E4-08 (analytics queue, 3) and E3-08 (resume session, 3) in Sprint 4. If they miss, E4-08 goes to v1.1 and E3-08 moves to Sprint 6.
+- **Could:** E5-09 (streak reminder, 3) is the first thing cut.
+- **Cut line if Sprint 4 velocity is below 24:** E6-09 (Practice this pattern, 2) moves to v1.1, and E5-06 onboarding shrinks to one screen plus the coach mark (saves 2).
 
 ---
 
@@ -429,19 +488,47 @@ Difficulty mix per domain is 4 × D1, 4 × D2, 2 × D3.
 | E4-07 "Reviews due" on Home | 1 | Dev A |
 | **Total** | **24** | |
 
-*E4-08 (analytics queue, 3 SP) and E3-08 (resume session, 3 SP) are stretch goals in this sprint and otherwise move to Sprint 5.*
+*E4-08 (analytics queue, 3 SP) and E3-08 (resume session, 3 SP) are stretch goals in this sprint. If they miss, E4-08 moves to v1.1 and E3-08 to Sprint 6.*
 
 **Exit criteria / demo:**
 - Unit tests show that SM-2 intervals follow the spec for a table of answer sequences.
 - Simulated dates (a mocked clock) show the streak increments, the freeze is used, the streak resets after 2 missed days, and a backwards clock change does not double-count.
 - Answering a concept wrong makes it come back the next day.
 
-**Milestone:** **M4: Feature complete (code freeze for new features at the end of the sprint).**
+**Milestone:** **M4: Core loop feature complete.** The code freeze for new features moves to the end of Sprint 5.
 
 ---
 
-### Sprint 5: Hardening, Beta & Launch
+### Sprint 5: Study Area & Ordered Trace (new)
 **Dates:** Mon 2027-02-01 → Fri 2027-02-12
+**Sprint goal:** *"When I don't know the answer, I can study the pattern from my handbook without leaving the question, then solve it; and I can prove I know an algorithm by tapping its visit order."*
+
+| Story | SP | Owner |
+|---|---|---|
+| E6-01 Handbook pipeline | 5 | Dev A |
+| E6-02 Mermaid → themed SVG | 3 | Dev A |
+| E6-03 Study library | 3 | Dev B |
+| E6-04 Chapter reader | 5 | Dev B |
+| E6-05 Study sheet + studied grading | 3 | Dev C |
+| E6-06 Link 50 scenarios to sections | 2 | Dev C |
+| E6-07 Trace-order validation | 3 | Dev C + Dev B |
+| E6-08 Trace-order content (10 scenarios) | 2 | Dev C |
+| **Total** | **26** | |
+
+*Planned 2 SP over capacity: E6-01 starts in week 1 of Sprint 4 as a spike if Sprint 4 has slack. E6-09 (Practice this pattern) moves to Sprint 6.*
+
+**Exit criteria / demo:**
+- Airplane mode: open the Study tab, read Chapter 13 with its diagram and code, then tap **Practice this pattern**.
+- In a session, tap **Study**, read the section, go back: the selection is kept, the verdict shows "Studied", +5 XP, and the scenario is due tomorrow.
+- A trace-order check (BFS from the start node) shows numbered taps, Undo works, and a wrong order shows which positions were right. The list view gives the same result with a screen reader.
+- Content CI fails if a `study.sectionId` is missing or a `traceOrder` answer doesn't match the algorithm's real output.
+
+**Milestone:** **M5: Study-then-solve loop complete. Feature freeze.**
+
+---
+
+### Sprint 6: Hardening, Beta & Launch
+**Dates:** Mon 2027-02-15 → Fri 2027-02-26
 **Sprint goal:** *"AlgoArchitect v1.0.0 is stable, accessible, tested on real devices, validated by beta users, and live in production."*
 
 | Story | SP | Owner |
@@ -454,13 +541,16 @@ Difficulty mix per domain is 4 × D1, 4 × D2, 2 × D3.
 | E5-06 Onboarding | 3 | Dev B |
 | E5-07 Closed beta (10–20 users) | 2 | PO |
 | E5-08 Production release v1.0.0 | 2 | Dev A |
-| **Total** | **24** | |
+| E6-09 Practice this pattern | 2 | Dev C |
+| **Total** | **26** | |
+
+*E6-09 is the first item cut if the sprint runs late (cut line in §5).*
 
 **Week-by-week:**
-- **Week 1 (Feb 1–5):** E2E suite, export and import, onboarding, then deploy `v1.0.0-rc.1` and **start the closed beta on Wed Feb 3**.
-- **Week 2 (Feb 8–12):** beta feedback triage (fix P0/P1 issues only), accessibility fixes, regression run, then **release `v1.0.0` on Thu Feb 11**. Fri Feb 12 is the review, retro and buffer day.
+- **Week 1 (Feb 15–19):** E2E suite (now including Study and trace-order flows), export and import, onboarding, then deploy `v1.0.0-rc.1` and **start the closed beta on Wed Feb 17**.
+- **Week 2 (Feb 22–26):** beta feedback triage (fix P0/P1 issues only), accessibility fixes, regression run, then **release `v1.0.0` on Thu Feb 25**. Fri Feb 26 is the review, retro and buffer day.
 
-**Milestone:** **M5: MVP released (Fri 2027-02-12).**
+**Milestone:** **M6: MVP released (Fri 2027-02-26).**
 
 ---
 
@@ -476,6 +566,9 @@ Difficulty mix per domain is 4 × D1, 4 × D2, 2 × D3.
 - [ ] Data migration from `v0.x` beta data is tested, or the beta data is explicitly reset.
 - [ ] Export and import round-trips without data loss.
 - [ ] The privacy note is published and analytics stay off until the user opts in.
+- [ ] The Study tab works in airplane mode: library, every chapter, diagrams and code.
+- [ ] Every scenario links to an existing handbook section, and every trace-order answer passes the CI algorithm check.
+- [ ] The handbook bundle is ≤ 400 KB gzipped and is not part of the initial JS bundle.
 - [ ] Release notes and a known-issues list are published.
 
 ---
@@ -492,6 +585,10 @@ Difficulty mix per domain is 4 × D1, 4 × D2, 2 × D3.
 | R6 | Streak and date edge cases (timezones, clock changes) | Medium | Medium | Pure streak module tested with a mocked clock and a table of edge cases |
 | R7 | Small team: one person's absence blocks an area | Medium | Medium | Pair on critical modules, document ADRs, no single owner without a reviewer |
 | R8 | Scope creep (accounts and sync requests) | Medium | Medium | Out-of-scope list in §2.3. PO controls the backlog and changes go to v1.1 |
+| R9 | Handbook format drift breaks the study pipeline (headings already vary between `#`, `##` and `###`) | Medium | Medium | Parse by `Chapter N:` and `N.M` patterns, not by level; pin a handbook version; snapshot tests; CI fails loudly instead of shipping a broken chapter |
+| R10 | The 116 Mermaid diagrams render badly in dark mode or on a 360 px screen | Medium | Low | Build-time SVG with token colors, horizontal scroll inside the figure, a text fallback (the diagram's source table or caption) if rendering fails |
+| R11 | Ambiguous trace-order answers (several valid BFS/DFS orders) | Medium | High | Every question states its tie-break; the content CI runs the algorithm and rejects ambiguous graphs |
+| R12 | Plan is ~9 SP over capacity after adding the Study area | Medium | Medium | Stretch items and the cut line in §5; re-plan at the Sprint 4 review with real velocity |
 
 ---
 
@@ -500,12 +597,13 @@ Difficulty mix per domain is 4 × D1, 4 × D2, 2 × D3.
 | Layer | Tooling | What |
 |---|---|---|
 | Static | TypeScript strict, ESLint, Prettier | Every commit |
-| Content | zod schema + custom rules (exactly one correct option, 3–4 options, Big-O answer is in the choices, trace target exists in the visual) | CI on every PR touching `content/` |
+| Content | zod schema + custom rules (exactly one correct option, 3–4 options, Big-O answer is in the choices, trace target exists in the visual, trace-order answer equals the algorithm's output, study section ids exist) | CI on every PR touching `content/` or `study.lock.json` |
+| Study build | Snapshot tests on parsed chapters; SVG diagram count matches the Mermaid block count | CI on every handbook version bump |
 | Unit | Vitest | `srs`, `xp`, `streak`, `session composer`, `content` with ≥ 80% coverage |
 | Component | Testing Library | Option selection, validation components, feedback |
 | E2E | Playwright (mobile viewport, offline emulation) | First run, full session, offline session, update flow, export/import |
 | Perf / PWA | Lighthouse CI | Budgets enforced on `main` |
-| Accessibility | axe-core + manual VoiceOver/TalkBack | Sprint 3 and Sprint 5 |
+| Accessibility | axe-core + manual VoiceOver/TalkBack | Sprint 3, Sprint 5 (reader, trace-order) and Sprint 6 |
 | Usability | 5-user hallway tests | End of Sprint 2 (loop) and Sprint 4 (progression) |
 
 ---
@@ -522,6 +620,7 @@ Difficulty mix per domain is 4 × D1, 4 × D2, 2 × D3.
 - Sessions per user per week, and average session length (target ≤ 5 min).
 - Accuracy per domain, plus second-exposure accuracy for SRS effectiveness.
 - Share of users with a 3+ and 7+ day streak.
+- Study use: share of questions answered after studying, and accuracy on the next exposure of a studied scenario vs one that wasn't studied.
 
 ---
 
@@ -533,6 +632,7 @@ Difficulty mix per domain is 4 × D1, 4 × D2, 2 × D3.
 4. Push reminders, weekly recap.
 5. Localization (pt-BR first).
 6. Leaderboards and shareable streak cards.
+7. Practice a single domain from Home (E3-09), notes and highlights in the Study area, and multi-language code samples.
 
 ---
 
@@ -545,3 +645,5 @@ Difficulty mix per domain is 4 × D1, 4 × D2, 2 × D3.
 | Q3 | Analytics provider (Plausible, Umami, or none) for opt-in events | PO | Sprint 4 planning (Jan 18) |
 | Q4 | Who are the beta testers (target 10–20 engineers)? | PO | Sprint 4 end (Jan 29) |
 | Q5 | Is a visual brand or logo needed for the MVP, or is a placeholder fine? | Designer | Sprint 0 end |
+| Q6 | Which handbook version is pinned for v1.0, and does the handbook need a license file before it ships inside the app? | PO | Sprint 5 planning (Feb 1) |
+| Q7 | Should Study show the handbook's C# samples only, or also language-neutral pseudocode? | PO + Dev C | Sprint 5 planning (Feb 1) |

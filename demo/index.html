@@ -447,6 +447,43 @@ button.li:focus-visible { outline-offset: -2px; }
 .unlock { flex-direction: row; align-items: center; gap: 12px; text-align: left; width: 100%; }
 .unlock .ic { color: var(--accent-fg); }
 
+/* Ordered trace badges (§7.23) */
+.obadge circle { fill: var(--accent); }
+.obadge text { fill: var(--on-accent); font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; }
+.node[data-state="correct"] .obadge circle { fill: var(--success); } .node[data-state="correct"] .obadge text { fill: var(--on-success); }
+.node[data-state="incorrect"] .obadge circle { fill: var(--error); } .node[data-state="incorrect"] .obadge text { fill: var(--on-error); }
+.node.given .body { stroke-dasharray: none; }
+.order-num { min-width: 28px; height: 24px; padding: 0 6px; border-radius: var(--radius-full); display: inline-grid; place-items: center; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; background: var(--accent); color: var(--on-accent); }
+.tile[data-state="correct"] .order-num { background: var(--success); color: var(--on-success); }
+.tile[data-state="incorrect"] .order-num { background: var(--error); color: var(--on-error); }
+.seq { font-family: var(--font-mono); font-variant-ligatures: none; }
+
+/* Study: library, reader, study sheet (§7.24, §8.15–8.17) */
+.chip-study { background: var(--surface-hover); color: var(--fg-secondary); }
+.stage-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; }
+.ch-num { width: 32px; height: 32px; border-radius: var(--radius-sm); display: grid; place-items: center; flex: none; background: var(--surface-hover); color: var(--fg-secondary); font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600; }
+.part-label { color: var(--fg-muted); padding: 0 0 8px; }
+.prose { display: flex; flex-direction: column; gap: 14px; }
+.prose h2 { font-size: 1.25rem; line-height: 1.625rem; font-weight: 600; letter-spacing: -0.017em; padding-top: 8px; }
+.prose h3 { font-size: 1.0625rem; line-height: 1.5rem; font-weight: 600; letter-spacing: -0.013em; }
+.prose p, .prose li { font-size: 1.0625rem; line-height: 1.625rem; letter-spacing: -0.013em; }
+.prose ul, .prose ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; }
+.prose strong { font-weight: 600; }
+.prose code.id { font-family: var(--font-mono); font-size: 0.9em; background: var(--surface-hover); border-radius: var(--radius-xs); padding: 0 4px; font-variant-ligatures: none; }
+.prose pre { margin: 0; padding: 12px 16px; background: var(--surface); border: 1px solid var(--line-subtle); border-radius: var(--radius-md); overflow-x: auto; font-family: var(--font-mono); font-size: 0.8125rem; line-height: 1.25rem; font-variant-ligatures: none; tab-size: 4; color: var(--fg); }
+.sheet .prose pre { background: var(--canvas); }
+.tok-k { color: var(--accent-fg); } .tok-t { color: var(--graphs-fg); } .tok-s { color: var(--sorting-fg); } .tok-n { color: var(--dp-fg); } .tok-c { color: var(--fg-muted); }
+.tbl { overflow-x: auto; border: 1px solid var(--line-subtle); border-radius: var(--radius-md); }
+.tbl table { border-collapse: collapse; width: 100%; font-size: 0.875rem; line-height: 1.25rem; }
+.tbl th, .tbl td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line-subtle); vertical-align: top; }
+.tbl th { font-weight: 600; color: var(--fg-secondary); background: var(--surface-hover); }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl td code, .tbl td .cx { font-family: var(--font-mono); font-size: 0.8125rem; }
+.diagram { padding: 12px; border: 1px solid var(--line-subtle); border-radius: var(--radius-md); background: var(--surface); }
+.src { display: flex; align-items: center; gap: 8px; color: var(--fg-muted); }
+.sheet-tall { max-height: 92%; min-height: 70%; }
+.studied-note { display: flex; gap: 8px; align-items: flex-start; padding: 12px 16px; border-radius: var(--radius-lg); background: var(--surface-hover); color: var(--fg-secondary); font-size: 0.875rem; line-height: 1.25rem; }
+
 /* Thumb-zone overlay (§4.5, §10.7 ?debug=zones) */
 .zones { position: absolute; inset: 0; pointer-events: none; z-index: 70; }
 .zones .line { position: absolute; left: 0; right: 0; top: 60%; border-top: 2px dashed var(--warning); }
@@ -516,7 +553,7 @@ button.li:focus-visible { outline-offset: -2px; }
     <div class="panel-note stack-8">
       <span class="t-overline muted">On this screen</span>
       <p class="t-bodysm fg2" id="panel-desc"></p>
-      <p class="t-caption muted">Desktop keys: 1–6 to choose, Enter to check or continue, Esc to close a sheet.</p>
+      <p class="t-caption muted">Desktop keys: 1–6 to choose, Enter to check or continue, Backspace to undo in order mode, Esc to close a sheet.</p>
     </div>
   </aside>
 </div>
@@ -563,7 +600,11 @@ const ICONS = {
   "history": '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/>',
   "shield-check": '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
   "arrow-right": '<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>',
-  "arrow-down": '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>'
+  "arrow-down": '<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>',
+  "book-open": '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+  "undo-2": '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/>',
+  "chevron-left": '<path d="m15 18-6-6 6-6"/>',
+  "list-ordered": '<path d="M10 12h11"/><path d="M10 18h11"/><path d="M10 6h11"/><path d="M4 10h2"/><path d="M4 6h1v4"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>'
 };
 const ic = (n, size = 20, extra = "") => {
   const sw = ((size >= 32 ? 1.5 : 1.75) * 24 / size).toFixed(3);
@@ -589,10 +630,24 @@ const DOM = {
   hashing: { short: "Hashing", full: "Hashing & Heaps", icon: "hash" }
 };
 
-/* ---------- Hardcoded content (2 playable scenarios) ---------- */
+/* ---------- Hardcoded content (3 playable scenarios) ---------- */
+const G1 = {
+  kind: "weighted", label: "Weighted graph · start S",
+  nodes: { S: [48, 56], A: [272, 56], B: [48, 188], C: [160, 188], D: [272, 188] },
+  order: ["S", "A", "B", "C", "D"],
+  edges: [["S", "A", 7], ["S", "B", 2], ["S", "C", 4], ["A", "D", 1], ["B", "C", 3], ["C", "D", 2]],
+  start: "S"
+};
+const G2 = {
+  kind: "unweighted", label: "Social graph · start Y (you)",
+  nodes: { Y: [44, 120], B: [140, 52], D: [140, 188], A: [252, 40], E: [252, 124], C: [252, 204] },
+  order: ["Y", "A", "B", "C", "D", "E"],
+  edges: [["Y", "B"], ["Y", "D"], ["B", "A"], ["B", "E"], ["D", "C"], ["A", "E"], ["E", "C"]],
+  start: "Y"
+};
 const SC = [
   {
-    domain: "hashing", meta: "Review · D2", progress: 9,
+    domain: "hashing", meta: "Review · D2", progress: 8, study: "2.3",
     title: "Cache cluster resizing",
     prompt: "Your CDN shards 40M cache keys across 12 nodes. Nodes join and leave during traffic spikes. Map keys to nodes so that the fewest keys move when the pool changes.",
     options: ["Modulo hashing (key % n)", "Consistent hashing", "Sorted array + binary search", "Min-heap by node load"],
@@ -612,13 +667,13 @@ const SC = [
     }
   },
   {
-    domain: "graphs", meta: "New · D1", progress: 10,
+    domain: "graphs", meta: "New · D1", progress: 9, study: "29.2",
     title: "Ride-hailing ETA",
     prompt: "Riders see a pickup ETA within a second. Road segments carry live travel times, always positive. Find the fastest route from the driver to the rider.",
     options: ["Breadth-first search", "Dijkstra + binary heap", "Depth-first search", "Topological sort"],
     correct: 1, okDetail: "Dijkstra + binary heap is the fit.",
     check: {
-      type: "trace", q: "Dijkstra from S. Which node is finalized first after S?", correct: "B",
+      type: "trace", graph: G1, q: "Dijkstra from S. Which node is finalized first after S?", correct: "B",
       ok: () => "B is closest to S, at distance 2.", bad: () => "It's B: the lightest edge from S (2).",
       label: "Trace first step"
     },
@@ -628,16 +683,139 @@ const SC = [
       cx: [["Time", "O((V + E) log V)"], ["Space", "O(V)"]],
       others: { 0: "Finds the fewest hops, not the lowest travel time.", 2: "Explores deep paths first; no shortest-path guarantee.", 3: "Orders dependencies in a DAG; road graphs have cycles." }
     }
+  },
+  {
+    domain: "graphs", meta: "Review · D1", progress: 10, study: "13.3",
+    title: "Friend suggestions",
+    prompt: "Show “people you may know”: users exactly two hops away, closest first. The social graph is unweighted and has 300M users.",
+    options: ["Breadth-first search", "Depth-first search", "Dijkstra + binary heap", "Union-Find"],
+    correct: 0, okDetail: "Breadth-first search is the fit.",
+    check: {
+      type: "order", graph: G2, answer: ["Y", "B", "D", "A", "E", "C"],
+      q: "Tap the nodes in the order BFS visits them from Y. Neighbors are queued in alphabetical order.",
+      ok: () => `<span class="seq">Y → B → D → A → E → C</span>`, bad: () => `BFS order: <span class="seq">Y B D A E C</span>`,
+      label: "Trace BFS order"
+    },
+    explain: {
+      title: "Why BFS wins",
+      body: "BFS explores level by level, so friends of friends (distance 2) come out before anyone farther away, and the first time it reaches a user is along a shortest path. Stop after level 2.",
+      cx: [["Time", "O(V + E)"], ["Space", "O(V)"]],
+      others: { 1: "Dives deep before going wide; distance-2 users can come out last.", 2: "Works, but every edge weighs 1, so the heap is pure overhead.", 3: "Answers “are they connected?”, not “how far?”." }
+    }
   }
 ];
-const GRAPH = {
-  nodes: { S: [48, 56], A: [272, 56], B: [48, 188], C: [160, 188], D: [272, 188] },
-  order: ["S", "A", "B", "C", "D"],
-  edges: [["S", "A", 7], ["S", "B", 2], ["S", "C", 4], ["A", "D", 1], ["B", "C", 3], ["C", "D", 2]],
-  start: "S"
+const neighbors = (g, id) => g.edges.filter(e => e[0] === id || e[1] === id).map(e => `${e[0] === id ? e[1] : e[0]}${e[2] ? ` (${e[2]})` : ""}`).sort().join(", ");
+const nodeDesc = (g, id) => `${id}${id === g.start ? " · start" : ""} · neighbors: ${neighbors(g, id)}`;
+
+/* ---------- Handbook excerpts (patterns-handbook, bundled offline in the real app) ---------- */
+function hlCs(code) {
+  const re = /(\/\/[^\n]*)|("(?:[^"\\]|\\.)*")|\b(public|static|void|var|new|int|while|foreach|in|if|return|continue|out|bool|for)\b|\b([A-Z][A-Za-z]*)\b|\b(\d+)\b/g;
+  let out = "", last = 0, m;
+  while ((m = re.exec(code))) {
+    out += esc(code.slice(last, m.index));
+    const cls = m[1] ? "c" : m[2] ? "s" : m[3] ? "k" : m[4] ? "t" : "n";
+    out += `<span class="tok-${cls}">${esc(m[0])}</span>`; last = re.lastIndex;
+  }
+  return out + esc(code.slice(last));
+}
+const pre = code => `<pre aria-label="C# code"><code>${hlCs(code.trim())}</code></pre>`;
+const tbl = (head, rows) => `<div class="tbl" tabindex="0"><table><thead><tr>${head.map(h => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+const idc = s => `<code class="id">${esc(s)}</code>`;
+const BFS_DIAGRAM = (() => {
+  const n = { 0: [40, 70], 1: [130, 30], 2: [130, 110], 3: [220, 30], 4: [220, 110], 5: [300, 30] };
+  const e = [[0, 1], [0, 2], [1, 3], [1, 4], [2, 4], [3, 5]];
+  return `<div class="diagram" aria-label="BFS levels: level 0 is node 0, level 1 is nodes 1 and 2, level 2 is nodes 3 and 4, level 3 is node 5" role="img"><svg viewBox="0 0 340 150" width="100%" aria-hidden="true">
+    ${["Level 0", "Level 1", "Level 2", "Level 3"].map((l, k) => `<text x="${[40, 130, 220, 300][k]}" y="146" text-anchor="middle" font-size="11" fill="var(--fg-muted)" font-family="var(--font-mono)">${l}</text>`).join("")}
+    ${e.map(([a, b]) => `<line x1="${n[a][0]}" y1="${n[a][1]}" x2="${n[b][0]}" y2="${n[b][1]}" stroke="var(--line-strong)" stroke-width="1.5"/>`).join("")}
+    ${Object.entries(n).map(([k, [x, y]]) => `<circle cx="${x}" cy="${y}" r="15" fill="var(--surface-raised)" stroke="var(--line-strong)" stroke-width="1.5"/><text x="${x}" y="${y + 5}" text-anchor="middle" font-size="13" font-weight="600" fill="var(--fg)" font-family="var(--font-mono)">${k}</text>`).join("")}
+  </svg></div>`;
+})();
+const STUDY = {
+  "2.3": { ch: 2, title: "2.3 Hash Maps & Hash Sets", html: () => `
+    <h3>What it is</h3>
+    <p>A <strong>hash map</strong> stores key-value pairs and provides <strong>average O(1)</strong> lookup, insertion, and deletion. It achieves this by using a <strong>hash function</strong> to convert each key into an array index.</p>
+    <h3>How it works</h3>
+    <ol><li><strong>Hash function:</strong> takes a key and produces an integer. In C#, every object has ${idc("GetHashCode()")}.</li>
+    <li><strong>Index mapping:</strong> the hash code is mapped to an array index, typically via ${idc("index = hashCode % arraySize")}.</li>
+    <li><strong>Collision resolution:</strong> two different keys can produce the same index. Chaining keeps a list per bucket; open addressing probes for the next empty slot.</li></ol>
+    <h3>Load factor and rehashing</h3>
+    <p>The <strong>load factor</strong> is ${idc("n / capacity")}. As it grows, collisions increase. C#'s ${idc("Dictionary")} rehashes (doubles its internal array and re-inserts all entries) when the load factor exceeds about 1.0.</p>
+    <p>Rehashing is an O(n) operation, but it happens infrequently enough that insertion remains <strong>amortized O(1)</strong>.</p>` },
+  "13.3": { ch: 13, title: "13.3 Graph BFS", html: () => `
+    <p>Breadth-First Search explores nodes level by level. Starting from a source node, BFS first visits all nodes at distance 1, then all nodes at distance 2, and so on. This level-by-level property is what makes BFS the go-to algorithm for shortest paths in unweighted graphs.</p>
+    ${pre(`public static void Bfs(Dictionary<int, List<int>> graph, int start)
+{
+    var visited = new HashSet<int> { start };
+    var queue = new Queue<int>();
+    queue.Enqueue(start);
+
+    while (queue.Count > 0)
+    {
+        int node = queue.Dequeue();
+        Console.Write(node + " ");
+
+        foreach (int neighbor in graph[node])
+        {
+            if (!visited.Contains(neighbor))
+            {
+                visited.Add(neighbor);
+                queue.Enqueue(neighbor);
+            }
+        }
+    }
+}`)}
+    <p>Critical detail: we add to ${idc("visited")} when <strong>enqueuing</strong>, not when <strong>dequeuing</strong>. Otherwise the same node can be enqueued multiple times from different neighbors.</p>
+    ${BFS_DIAGRAM}
+    <p>BFS from node 0 visits: <strong>Level 0: {0} → Level 1: {1, 2} → Level 2: {3, 4} → Level 3: {5}</strong>.</p>` },
+  "13.9": { ch: 13, title: "13.9 Pattern identification signals", html: () => tbl(["Signal in problem", "Technique"], [
+    ["“connected components”, “islands”, “flood fill”", "BFS or DFS"], ["“shortest path in unweighted graph”", "BFS"],
+    ["“explore all paths”, “all possible routes”", "DFS (possibly with backtracking)"], ["“can we reach from A to B?”", "BFS or DFS"],
+    ["“cycle detection in directed graph”", "DFS with 3-state coloring"], ["“bipartite”, “two-coloring”", "BFS with color array"]]) },
+  "13.10": { ch: 13, title: "13.10 Complexity analysis", html: () => tbl(["Aspect", "Adjacency list", "Adjacency matrix"], [
+    ["Time (DFS/BFS)", cx("O(V + E)"), cx("O(V^2)")], ["Space (storage)", cx("O(V + E)"), cx("O(V^2)")], ["Edge check", "O(degree)", cx("O(1)")]]) },
+  "29.2": { ch: 29, title: "29.2 Dijkstra's Algorithm", html: () => `
+    <p>Dijkstra's algorithm is a <strong>greedy</strong> algorithm. It maintains a set of finalized vertices (whose shortest distances are known) and repeatedly selects the unfinalized vertex with the smallest tentative distance, finalizes it, and relaxes its outgoing edges.</p>
+    <ol><li>Initialize ${idc("dist[source] = 0")}, ${idc("dist[v] = ∞")} for all others.</li><li>Insert the source into a min-heap with priority 0.</li>
+    <li>While the heap is non-empty: extract the vertex ${idc("u")} with minimum distance; skip it if already finalized; for each neighbor ${idc("v")} with weight ${idc("w")}, if ${idc("dist[u] + w < dist[v]")}, update ${idc("dist[v]")} and insert ${idc("v")} into the heap.</li></ol>
+    ${pre(`var pq = new PriorityQueue<int, int>(); // (node, distance)
+pq.Enqueue(source, 0);
+
+while (pq.Count > 0)
+{
+    pq.TryDequeue(out int u, out int d);
+    if (d > dist[u]) continue; // stale entry
+
+    foreach (var (v, w) in adj[u])
+    {
+        int newDist = dist[u] + w;
+        if (newDist < dist[v])
+        {
+            dist[v] = newDist;
+            pq.Enqueue(v, newDist);
+        }
+    }
+}`)}
+    <p><strong>Complexity:</strong> ${cx("O((V + E) log V)")} with a binary heap. <strong>Why negative weights break it:</strong> Dijkstra finalizes a vertex once and never revisits it.</p>` },
+  "29.7": { ch: 29, title: "29.7 Pattern identification signals", html: () => tbl(["Signal in problem", "Algorithm"], [
+    ["“shortest path” + non-negative weights", "Dijkstra"], ["“shortest path” + negative weights", "Bellman-Ford"],
+    ["“all pairs shortest path”", "Floyd-Warshall"], ["“minimum cost to connect all”", "MST (Kruskal or Prim)"], ["“network delay”, “minimum time to reach all”", "Dijkstra → take max distance"]]) }
 };
-const neighbors = id => GRAPH.edges.filter(e => e[0] === id || e[1] === id).map(e => `${e[0] === id ? e[1] : e[0]} (${e[2]})`).join(", ");
-const nodeDesc = id => `${id}${id === GRAPH.start ? " · start" : ""} · neighbors: ${neighbors(id)}`;
+const BOOK = [
+  ["Part I · Foundations", [[1, "Mastering Big-O Notation"], [2, "Data Structure Toolkit", "hashing"]]],
+  ["Part II · Array & Pointer Patterns", [[3, "Two Pointers"], [4, "Sliding Window"], [5, "Prefix Sum"], [6, "Fast & Slow Pointers"], [7, "Kadane's Algorithm & Dutch National Flag"]]],
+  ["Part III · Search & Sort Patterns", [[8, "Binary Search (Modified)", "sorting"], [9, "Sorting Algorithms Deep Dive", "sorting"], [10, "Merge Intervals & Cyclic Sort", "sorting"]]],
+  ["Part IV · Tree Patterns", [[11, "Tree DFS Patterns", "trees"], [12, "Tree BFS Patterns", "trees"]]],
+  ["Part V · Graph Patterns", [[13, "Graph DFS & BFS", "graphs"], [14, "Union-Find (Disjoint Set Union)", "graphs"], [15, "Topological Sort", "graphs"]]],
+  ["Part VI · Stack & Heap Patterns", [[16, "Monotonic Stack"], [17, "Top K Elements / Heap Patterns", "hashing"], [18, "Two Heaps", "hashing"], [19, "K-way Merge", "hashing"]]],
+  ["Part VII · Recursive & Combinatorial", [[20, "Backtracking"], [21, "Subsets, Combinations & Permutations"]]],
+  ["Part VIII · Dynamic Programming", [[22, "Dynamic Programming Masterclass", "dp"]]],
+  ["Part IX · Greedy & Specialized", [[23, "Greedy Algorithms"], [24, "Bit Manipulation"], [25, "Trie Patterns", "trees"], [26, "In-place LinkedList Reversal"]]],
+  ["Part X · Advanced Topics", [[27, "Matrix Traversal Patterns", "graphs"], [28, "Math & Geometry"], [29, "Shortest Path Algorithms", "graphs"]]],
+  ["Part XI · Mastery", [[30, "The Pattern Recognition Decision Engine"]]]
+];
+const CH = {}; BOOK.forEach(([, chs]) => chs.forEach(([n, t, d]) => CH[n] = { n, t, d }));
+const CH_SECTIONS = { 2: ["2.3"], 13: ["13.3", "13.9", "13.10"], 29: ["29.2", "29.7"] };
+const CH_PRACTICE = { 2: 0, 13: 2, 29: 1 }; // chapter -> scenario index for "Practice this pattern"
 
 /* ---------- XP / levels (sprint §4.4, design §8.9 reading) ---------- */
 const levelStart = n => 50 * n * (n - 1);
@@ -650,7 +828,8 @@ const S = {
   reduce: matchMedia("(prefers-reduced-motion: reduce)").matches,
   haptics: true, analytics: false, bannerOff: false,
   xp: 220, streak: 12, streakDone: false, freezes: 1, sessionDone: false, resume: null,
-  i: 0, phase: "q", sel: null, checked: false, res: [{}, {}], sheet: null, traceView: "graph",
+  i: 0, phase: "q", sel: null, checked: false, res: [{}, {}, {}], sheet: null, traceView: "graph",
+  order: [], studied: [false, false, false], study: null, studyReturn: null, readerCh: 13, practice: false, read: { 13: 1 },
   guard: 0, coach: true, othersOpen: true, sum: null, toast: null
 };
 const fx = new Set(); // one-shot animation flags, cleared after each render
@@ -670,7 +849,7 @@ function xpBar(xp, size = "md", anim = "") {
 }
 function tabbar(active) {
   const t = (id, label, icon) => `<button class="tab" data-act="go" data-arg="${id}" id="tab-${id}" ${active === id ? 'aria-current="page"' : ""}><span class="pill">${ic(icon, 24)}</span>${label}</button>`;
-  return `<nav class="tabbar" aria-label="Main"><div class="col">${t("home", "Play", "play")}${t("stats", "Stats", "chart-column")}${t("settings", "Settings", "settings")}</div></nav>`;
+  return `<nav class="tabbar" aria-label="Main"><div class="col">${t("home", "Play", "play")}${t("study", "Study", "book-open")}${t("stats", "Stats", "chart-column")}${t("settings", "Settings", "settings")}</div></nav>`;
 }
 const offlineBanner = () => (S.offline && !S.bannerOff) ? `<div class="offline a-fade" role="status">${ic("wifi-off", 16)}<p>Offline. Everything works; progress is saved on this device.</p><button class="btn btn-icon" data-act="banner-off" aria-label="Dismiss">${ic("x", 20)}</button></div>` : "";
 const toggleRow = (id, title, desc, on, icon) => `<button class="li ${icon ? "has-ic" : ""}" role="switch" aria-checked="${on}" data-act="toggle" data-arg="${id}" id="sw-${id}">${icon ? ic(icon) : ""}<span class="li-main"><span class="li-title">${title}</span>${desc ? `<span class="li-desc">${desc}</span>` : ""}</span><span class="toggle"><i>${ic("check", 16)}</i></span></button>`;
@@ -783,18 +962,22 @@ function tileState(k, correct) {
   if (k === S.sel) return "incorrect";
   return "dimmed";
 }
-function verdictStrip(ok, detail, xp) {
+function verdictStrip(ok, detail, xp, studied) {
+  const chips = `${studied ? `<span class="chip chip-study">${ic("book-open", 16)}Studied</span>` : ""}${ok && xp ? `<span class="chip chip-xp ${fxc("verdict", "a-rise-2")}">+${xp} XP</span>` : ""}`;
   return `<div class="verdict ${ok ? "ok" : "bad"} ${fxc("verdict", "a-rise")}" role="status">
     <span class="${fxc("verdict", "a-pop")}">${ic(ok ? "circle-check" : "circle-x", 24)}</span>
-    <span class="t-title3">${ok ? "Correct" : "Not quite"}</span>
-    ${ok && xp ? `<span class="chip chip-xp ${fxc("verdict", "a-rise-2")}">+${xp} XP</span>` : "<span></span>"}
+    <span class="t-title3">${ok ? "Correct" : "Not quite"}</span><span class="row" style="gap:6px">${chips}</span>
     <span class="detail">${detail}</span></div>`;
 }
+const isOrder = () => S.phase === "v" && SC[S.i].check.type === "order";
+const ready = () => isOrder() ? S.order.length === SC[S.i].check.answer.length : S.sel != null;
 function dockButton() {
-  const dis = !S.checked && S.sel == null;
+  const dis = !S.checked && !ready();
   return `<button class="btn btn-primary btn-lg" id="dock-btn" data-act="dock" ${dis ? 'aria-disabled="true" aria-describedby="dock-hint"' : ""}>${S.checked ? "Continue" : "Check"}</button>
-    ${dis ? '<span id="dock-hint" class="sr">Select an answer first</span>' : ""}`;
+    ${dis ? `<span id="dock-hint" class="sr">${isOrder() ? "Tap every node in order first" : "Select an answer first"}</span>` : ""}`;
 }
+const studyBtn = () => S.checked ? "" : `<button class="btn btn-ghost btn-sm" data-act="study" data-arg="${SC[S.i].study}" id="study-btn" aria-label="Study this pattern in the handbook">${ic("book-open", 16)}Study</button>`;
+const matchXP = i => S.studied[i] ? 5 : 10;
 SCREENS.session = () => {
   const sc = SC[S.i];
   const enter = fxc("enter", "a-step");
@@ -802,20 +985,20 @@ SCREENS.session = () => {
     const tiles = sc.options.map((o, k) => {
       const st = tileState(k, sc.correct);
       let cap = "", icon = "";
-      if (st === "correct") { cap = S.sel === k ? "Best fit · your pick" : "Best fit"; icon = ic("circle-check", 20, 'class="ic st"'); }
+      if (st === "correct") { cap = S.sel === k ? "Best fit · your pick" : "Best fit"; icon = ic("circle-check", 20); }
       if (st === "incorrect") { cap = "Your pick"; icon = ic("circle-x", 20); }
       const name = `${o}${cap ? ", " + cap.toLowerCase().replace(" · ", ", ") : ""}${st === "incorrect" ? ", incorrect" : ""}`;
       return `<button class="tile" role="radio" id="opt-${k}" data-act="pick" data-arg="${k}" data-state="${st}" aria-checked="${S.sel === k}" ${S.checked ? 'aria-disabled="true"' : ""} tabindex="${(S.sel ?? 0) === k ? 0 : -1}" aria-label="${esc(name)}">
         <span class="key">${"ABCD"[k]}</span><span class="lbl">${esc(o)}${cap ? `<span class="cap">${cap}</span>` : ""}</span>${icon ? `<span class="st">${icon}</span>` : ""}</button>`;
     }).join("");
     const ok = S.res[S.i].match;
-    const verdict = S.checked ? verdictStrip(ok, ok ? sc.okDetail : `Best fit: ${sc.options[sc.correct]}.`, 10) : "";
-    const coach = (S.coach && S.i === 0 && !S.checked) ? `<div class="coach a-rise" role="note"><p>Tap the approach that fits best, then Check.</p><button class="btn btn-ghost btn-sm" data-act="coach-off">Got it</button></div>` : "";
+    const verdict = S.checked ? verdictStrip(ok, ok ? sc.okDetail : `Best fit: ${sc.options[sc.correct]}.`, matchXP(S.i), S.studied[S.i]) : "";
+    const coach = (S.coach && S.i === 0 && !S.checked) ? `<div class="coach a-rise" role="note"><p>Tap the approach that fits best, then Check. Not sure? Tap Study.</p><button class="btn btn-ghost btn-sm" data-act="coach-off">Got it</button></div>` : "";
     return `<section class="screen" aria-label="Scenario">
       ${sessionTop(sc.progress)}
       <div class="scroll stage"><div class="col ${enter}">
-        <div class="row"><span class="chip dom-${sc.domain}">${ic(DOM[sc.domain].icon, 16)}${DOM[sc.domain].short}</span><span class="t-caption muted">${sc.meta}</span></div>
-        <h2 class="t-title2" style="margin-top:4px">${sc.title}</h2>
+        <div class="stage-head"><div class="row"><span class="chip dom-${sc.domain}">${ic(DOM[sc.domain].icon, 16)}${DOM[sc.domain].short}</span><span class="t-caption muted">${sc.meta}</span></div>${studyBtn()}</div>
+        <h2 class="t-title2">${sc.title}</h2>
         <p class="t-bodylg">${sc.prompt}</p>
         <p class="t-body w6 fg2" id="q-label" style="margin-top:4px">Which approach fits best?</p>
       </div></div>
@@ -826,7 +1009,7 @@ SCREENS.session = () => {
   }
   const ch = sc.check;
   const ok = S.res[S.i].check;
-  const verdict = S.checked ? verdictStrip(ok, ok ? ch.ok() : ch.bad(), 5) : "";
+  const verdict = S.checked ? verdictStrip(ok, ok ? ch.ok() : ch.bad(), 5, false) : "";
   if (ch.type === "bigO") {
     const tiles = ch.choices.map((c, k) => {
       const st = tileState(k, ch.correct);
@@ -836,70 +1019,85 @@ SCREENS.session = () => {
     return `<section class="screen" aria-label="Check">
       ${sessionTop(sc.progress)}
       <div class="scroll stage"><div class="col ${enter}">
-        <div class="row"><span class="t-caption muted">Check 1 of 1 ·</span><span class="chip">${ic("timer", 16)}${ch.measure}</span></div>
-        <h2 class="t-title3" id="q-label" style="margin-top:4px">${ch.q}</h2>
+        <div class="stage-head"><div class="row"><span class="t-caption muted">Check 1 of 1 ·</span><span class="chip">${ic("timer", 16)}${ch.measure}</span></div>${studyBtn()}</div>
+        <h2 class="t-title3" id="q-label">${ch.q}</h2>
       </div></div>
       <div class="dock"><div class="col ${enter}">${verdict}
         <div class="bigo" role="radiogroup" aria-labelledby="q-label">${tiles}</div>
         <div style="height:0"></div>${dockButton()}</div></div>
     </section>`;
   }
-  /* trace */
+  /* trace (first step) and order */
   return `<section class="screen" aria-label="Check">
     ${sessionTop(sc.progress)}
     <div class="scroll stage"><div class="col ${enter}">
-      <span class="t-caption muted">Check 1 of 1 · Trace</span>
-      <h2 class="t-title3" id="q-label" style="margin-top:4px">${ch.q}</h2>
+      <div class="stage-head"><span class="t-caption muted">Check 1 of 1 · ${ch.type === "order" ? "Order" : "Trace"}</span>${studyBtn()}</div>
+      <h2 class="t-title3" id="q-label">${ch.q}</h2>
       ${traceCanvas(ch)}
     </div></div>
     <div class="dock"><div class="col ${enter}">${verdict}${dockButton()}</div></div>
   </section>`;
 };
-function nodeState(id, correct) {
+function nodeState(ch, id) {
+  if (ch.type === "order") {
+    const pos = S.order.indexOf(id);
+    if (!S.checked) return pos >= 0 ? "selected" : "default";
+    if (pos < 0) return "dimmed";
+    return ch.answer[pos] === id ? "correct" : "incorrect";
+  }
   if (!S.checked) return S.sel === id ? "selected" : "default";
-  if (id === correct) return "correct";
+  if (id === ch.correct) return "correct";
   if (id === S.sel) return "incorrect";
   return "dimmed";
 }
 function traceCanvas(ch) {
-  const R = 18, N = GRAPH.nodes;
-  const head = `<div class="trace-head"><span class="t-caption muted">Weighted graph · start S</span>
-    <button class="btn btn-ghost btn-sm" data-act="trace-view" id="trace-toggle">${S.traceView === "graph" ? ic("list", 16) + "List" : ic("waypoints", 16) + "Graph"}</button></div>`;
-  const readout = `<p class="readout" aria-live="polite">${S.sel ? `Selected: ${S.sel}` : "Tap a node · nothing selected"}</p>`;
+  const g = ch.graph, R = 18, N = g.nodes, ord = ch.type === "order";
+  const total = ord ? ch.answer.length : 0;
+  const undo = ord && !S.checked && S.order.length > 1 ? `<button class="btn btn-ghost btn-sm" data-act="undo" id="undo-btn">${ic("undo-2", 16)}Undo</button>` : "";
+  const head = `<div class="trace-head"><span class="t-caption muted">${g.label}</span><span class="row" style="gap:0">${undo}
+    <button class="btn btn-ghost btn-sm" data-act="trace-view" id="trace-toggle">${S.traceView === "graph" ? ic("list", 16) + "List" : ic("waypoints", 16) + "Graph"}</button></span></div>`;
+  let readout;
+  if (ord) {
+    readout = `<p class="readout" aria-live="polite">${S.checked ? "Your order" : "Order"}: <span class="seq">${S.order.join(" → ")}</span> · ${S.order.length} of ${total}${!S.checked && S.order.length < total ? " · tap the next node" : ""}</p>`;
+  } else readout = `<p class="readout" aria-live="polite">${S.sel ? `Selected: ${S.sel}` : "Tap a node · nothing selected"}</p>`;
+  const role = ord ? 'role="group"' : 'role="radiogroup"';
+  const pressAttr = id => ord ? `aria-pressed="${S.order.includes(id)}"` : `role="radio" aria-checked="${S.sel === id}"`;
+  const stateWord = (st, pos) => st === "correct" ? ", correct" : st === "incorrect" ? (ord ? ", wrong position" : ", your pick, incorrect") : "";
   if (S.traceView === "list") {
-    const rows = GRAPH.order.map((id, k) => {
-      const st = nodeState(id, ch.correct);
+    const rows = g.order.map(id => {
+      const st = nodeState(ch, id), pos = S.order.indexOf(id);
       const icon = st === "correct" ? ic("circle-check", 20) : st === "incorrect" ? ic("circle-x", 20) : "";
-      const cap = st === "correct" ? "Correct" : st === "incorrect" ? "Your pick" : "";
-      return `<button class="tile" role="radio" id="node-${id}" data-act="pick" data-arg="${id}" data-state="${st}" aria-checked="${S.sel === id}" ${S.checked ? 'aria-disabled="true"' : ""} tabindex="${(S.sel ?? "S") === id ? 0 : -1}">
-        <span class="key">${id}</span><span class="lbl t-bodysm" style="font-weight:500;padding-top:2px">${esc(nodeDesc(id).slice(4))}${cap ? `<span class="cap">${cap}</span>` : ""}</span>${icon ? `<span class="st">${icon}</span>` : ""}</button>`;
+      const cap = ord ? (st === "incorrect" ? `Should be ${ch.answer.indexOf(id) + 1}` : "") : (st === "correct" ? "Correct" : st === "incorrect" ? "Your pick" : "");
+      const trail = ord && pos >= 0 ? `<span class="order-num">${pos + 1}</span>` : (icon ? `<span class="st">${icon}</span>` : "");
+      return `<button class="tile" ${pressAttr(id)} id="node-${id}" data-act="pick" data-arg="${id}" data-state="${st}" ${S.checked || (ord && id === g.start) ? 'aria-disabled="true"' : ""}>
+        <span class="key">${id}</span><span class="lbl t-bodysm" style="font-weight:500;padding-top:2px">${esc(nodeDesc(g, id).slice(id.length + 3))}${cap ? `<span class="cap">${cap}</span>` : ""}</span>${trail}</button>`;
     }).join("");
-    return `<div class="trace">${head}<div class="group" role="radiogroup" aria-labelledby="q-label" style="padding-top:4px">${rows}</div>${readout}</div>`;
+    return `<div class="trace">${head}<div class="group" ${role} aria-labelledby="q-label" style="padding-top:4px">${rows}</div>${readout}</div>`;
   }
-  const edges = GRAPH.edges.map(([a, b, w]) => {
+  const edges = g.edges.map(([a, b, w]) => {
     const [x1, y1] = N[a], [x2, y2] = N[b], d = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / d, uy = (y2 - y1) / d;
     const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
-    return `<line class="edge" x1="${x1 + ux * R}" y1="${y1 + uy * R}" x2="${x2 - ux * R}" y2="${y2 - uy * R}"/>
-      <rect class="wpill" x="${mx - 10}" y="${my - 9}" width="20" height="18" rx="6"/><text class="wtext" x="${mx}" y="${my + 4.5}" text-anchor="middle">${w}</text>`;
+    return `<line class="edge" x1="${x1 + ux * R}" y1="${y1 + uy * R}" x2="${x2 - ux * R}" y2="${y2 - uy * R}"/>` +
+      (w ? `<rect class="wpill" x="${mx - 10}" y="${my - 9}" width="20" height="18" rx="6"/><text class="wtext" x="${mx}" y="${my + 4.5}" text-anchor="middle">${w}</text>` : "");
   }).join("");
-  const nodes = GRAPH.order.map(id => {
-    const [x, y] = N[id], st = nodeState(id, ch.correct);
+  const nodes = g.order.map(id => {
+    const [x, y] = N[id], st = nodeState(ch, id), pos = S.order.indexOf(id);
     let badge = "";
-    if (st === "correct") badge = `<g class="${fxc("verdict", "a-pop")}" style="transform-origin:${x + 15}px ${y - 15}px"><circle class="badge-ok" cx="${x + 15}" cy="${y - 15}" r="8.5"/><path class="badge-ok-g" d="M${x + 11} ${y - 15} l3 3 l5 -6" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
-    if (st === "incorrect") badge = `<g><circle class="badge-bad" cx="${x + 15}" cy="${y - 15}" r="8.5"/><path class="badge-bad-g" d="M${x + 12} ${y - 18} l6 6 M${x + 18} ${y - 18} l-6 6" fill="none" stroke-width="2" stroke-linecap="round"/></g>`;
-    return `<g class="node" data-node="${id}" data-state="${st}">
-      <circle class="fring" cx="${x}" cy="${y}" r="${R + (id === GRAPH.start ? 9 : 5)}"/>
-      ${id === GRAPH.start ? `<circle class="ring" cx="${x}" cy="${y}" r="${R + 4}"/><text class="start" x="${x}" y="${y - 30}" text-anchor="middle">start</text>` : ""}
+    if (ord && pos >= 0) badge = `<g class="obadge ${S.checked ? fxc("verdict", "a-pop") : ""}" style="transform-origin:${x + 15}px ${y - 15}px"><circle cx="${x + 15}" cy="${y - 15}" r="9"/><text x="${x + 15}" y="${y - 11}" text-anchor="middle">${pos + 1}</text></g>`;
+    else if (st === "correct") badge = `<g class="${fxc("verdict", "a-pop")}" style="transform-origin:${x + 15}px ${y - 15}px"><circle class="badge-ok" cx="${x + 15}" cy="${y - 15}" r="8.5"/><path class="badge-ok-g" d="M${x + 11} ${y - 15} l3 3 l5 -6" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+    else if (st === "incorrect") badge = `<g><circle class="badge-bad" cx="${x + 15}" cy="${y - 15}" r="8.5"/><path class="badge-bad-g" d="M${x + 12} ${y - 18} l6 6 M${x + 18} ${y - 18} l-6 6" fill="none" stroke-width="2" stroke-linecap="round"/></g>`;
+    const startLbl = id === g.start ? `<circle class="ring" cx="${x}" cy="${y}" r="${R + 4}"/><text class="start" x="${x}" y="${y - 30}" text-anchor="middle">start</text>` : "";
+    return `<g class="node" data-node="${id}" data-state="${st}"><circle class="fring" cx="${x}" cy="${y}" r="${R + (id === g.start ? 9 : 5)}"/>${startLbl}
       <circle class="body" cx="${x}" cy="${y}" r="${R}"/><text x="${x}" y="${y + 5}" text-anchor="middle">${id}</text>${badge}</g>`;
   }).join("");
-  const hits = GRAPH.order.map(id => {
-    const [x, y] = N[id], st = nodeState(id, ch.correct);
-    const extra = st === "correct" ? ", correct" : st === "incorrect" ? ", your pick, incorrect" : "";
-    return `<button class="hit" role="radio" id="node-${id}" data-act="pick" data-arg="${id}" data-node-hit="${id}" style="left:${(x / 320 * 100).toFixed(2)}%;top:${(y / 240 * 100).toFixed(2)}%" aria-checked="${S.sel === id}" ${S.checked ? 'aria-disabled="true"' : ""} tabindex="${(S.sel ?? "S") === id ? 0 : -1}" aria-label="${esc(nodeDesc(id) + extra)}"></button>`;
+  const hits = g.order.map(id => {
+    const [x, y] = N[id], st = nodeState(ch, id), pos = S.order.indexOf(id);
+    const label = nodeDesc(g, id) + (ord && pos >= 0 ? `, step ${pos + 1}` : "") + stateWord(st, pos);
+    return `<button class="hit" ${pressAttr(id)} id="node-${id}" data-act="pick" data-arg="${id}" data-node-hit="${id}" style="left:${(x / 320 * 100).toFixed(2)}%;top:${(y / 240 * 100).toFixed(2)}%" ${S.checked || (ord && id === g.start) ? 'aria-disabled="true"' : ""} aria-label="${esc(label)}"></button>`;
   }).join("");
   return `<div class="trace">${head}
-    <div class="trace-box" role="radiogroup" aria-labelledby="q-label" aria-describedby="g-sum">
-      <span id="g-sum" class="sr">Weighted graph, 5 nodes. Start: S.</span>
+    <div class="trace-box" ${role} aria-labelledby="q-label" aria-describedby="g-sum">
+      <span id="g-sum" class="sr">${g.kind === "weighted" ? "Weighted" : "Unweighted"} graph, ${g.order.length} nodes. Start: ${g.start}.${ord ? " Tap nodes in visit order; tap the last one again to undo." : ""}</span>
       <svg viewBox="0 0 320 240" aria-hidden="true">${edges}${nodes}</svg>${hits}
     </div>${readout}</div>`;
 }
@@ -908,13 +1106,13 @@ function traceCanvas(ch) {
 SCREENS.summary = () => {
   const s = S.sum, c = 2 * Math.PI * 43, off = c * (1 - s.correct / 10);
   const concepts = [
-    [s.r0, "hashing", "Consistent hashing"], [s.r1, "graphs", "Dijkstra"], [false, "dp", "Edit distance"],
-    [true, "trees", "Trie"], [true, "sorting", "Quickselect"]
-  ].map(([ok, d, n]) => `<li class="concept"><span class="${ok ? "ok" : "bad"}">${ic(ok ? "circle-check" : "circle-x")}</span><span class="dot dot-${d}" aria-hidden="true"></span>
-      <span class="t-body">${n}<span class="sr">, ${DOM[d].full}, ${ok ? "correct" : "missed"}</span></span>${ok ? "<span></span>" : '<span class="t-caption muted">due tmrw</span>'}</li>`).join("");
+    [s.r[0], "hashing", "Consistent hashing", S.studied[0]], [s.r[1], "graphs", "Dijkstra", S.studied[1]], [s.r[2], "graphs", "Breadth-first search", S.studied[2]],
+    [false, "dp", "Edit distance"], [true, "trees", "Trie"]
+  ].filter((row, k) => !s.practice || (k < 3 && k >= (S.start || 0))).map(([ok, d, n, st]) => `<li class="concept"><span class="${ok ? "ok" : "bad"}">${ic(ok ? "circle-check" : "circle-x")}</span><span class="dot dot-${d}" aria-hidden="true"></span>
+      <span class="t-body">${n}<span class="sr">, ${DOM[d].full}, ${ok ? "correct" : "missed"}${st ? ", studied first" : ""}</span></span>${!ok ? '<span class="t-caption muted">due tmrw</span>' : st ? '<span class="t-caption muted">studied · tmrw</span>' : "<span></span>"}</li>`).join("");
   return `<section class="screen" aria-label="Session summary">
     <div class="scroll content" style="padding-top:calc(24px + env(safe-area-inset-top))"><div class="col stack-12" style="gap:24px">
-      <div><h1 class="t-title1" tabindex="-1" id="sum-h">Session complete</h1><p class="t-caption muted num">10 scenarios · 4 min 38 s</p></div>
+      <div><h1 class="t-title1" tabindex="-1" id="sum-h">Session complete</h1><p class="t-caption muted num">${s.practice ? "Practice · reviews unchanged" : "10 scenarios · 4 min 38 s"}</p></div>
       <div class="hero-row">
         <div class="card ring-card"><div class="ring-box"><svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true">
           <circle class="ring-track" cx="48" cy="48" r="43" stroke-width="10"/>
@@ -922,7 +1120,7 @@ SCREENS.summary = () => {
           <span class="center">${s.correct}/10</span></div><span class="t-caption muted">correct</span><span class="sr">${s.correct} of 10 correct</span></div>
         <div class="stack-12">
           <div class="card" style="gap:6px;padding:12px 16px"><span class="t-title3 num" id="sum-xp">+${s.xp} XP</span><span class="t-caption muted">Level ${levelOf(S.xp)}</span>${xpBar(Math.min(S.xp, levelStart(levelOf(s.prev) + 1) - 1), "sm", fxc("enter", "a-fill"))}</div>
-          <div class="card" style="gap:2px;padding:12px 16px"><div class="row"><span class="flame ${fxc("enter", "a-flame")}" style="color:var(--streak);display:inline-flex">${flame(true, 24)}</span><span class="t-title3 num">Day ${S.streak}</span></div><span class="t-caption muted">Streak extended</span></div>
+          <div class="card" style="gap:2px;padding:12px 16px"><div class="row"><span class="flame ${s.streakNew ? fxc("enter", "a-flame") : ""}" style="color:var(--streak);display:inline-flex">${flame(true, 24)}</span><span class="t-title3 num">Day ${S.streak}</span></div><span class="t-caption muted">${s.streakNew ? "Streak extended" : "Today already counted"}</span></div>
         </div>
       </div>
       <div><p class="t-overline muted" style="padding-bottom:4px">Concepts</p><ul style="list-style:none;margin:0;padding:0">${concepts}</ul>
@@ -946,6 +1144,48 @@ SCREENS.levelup = () => {
       <div style="width:100%" class="stack-8 ${fxc("enter", "a-stag-3")}"><div class="between"><span class="t-caption muted">Level ${L}</span><span class="t-caption muted num">${S.xp}/${next} XP</span></div>${xpBar(S.xp)}</div>
     </div></div>
     <div class="footer-cta" style="padding-bottom:max(12px, env(safe-area-inset-bottom))"><div class="col"><button class="btn btn-primary btn-lg" data-act="lu-done" id="cta">Continue</button></div></div>
+  </section>`;
+};
+
+/* Study library (§8.16) */
+SCREENS.study = () => {
+  const parts = BOOK.map(([part, chs]) => `<div><p class="t-overline muted part-label">${part}</p><div class="list">${chs.map(([n, t, d]) => {
+    const bundled = !!CH_SECTIONS[n];
+    const meta = bundled ? (S.read[n] ? `${S.read[n]} of ${CH_SECTIONS[n].length} sections read` : `${CH_SECTIONS[n].length} section${CH_SECTIONS[n].length > 1 ? "s" : ""}`) : "Not in this demo";
+    return `<button class="li" data-act="open-ch" data-arg="${n}" id="ch-${n}"><span class="ch-num">${n}</span><span class="li-main"><span class="li-title">${t}</span><span class="li-desc row" style="gap:6px">${d ? `<span class="dot dot-${d}" aria-hidden="true"></span>${DOM[d].short} · ` : ""}${meta}</span></span>${ic("chevron-right", 20, 'style="color:var(--fg-muted)"')}</button>`;
+  }).join("")}</div></div>`).join("");
+  return `<section class="screen" aria-label="Study">
+    <header class="topbar"><div class="col"><h1 class="t-title2">Study</h1><span class="t-caption muted">30 chapters · offline</span></div></header>
+    <div class="scroll content"><div class="col stack-12 ${fxc("enter", "a-step")}" style="gap:24px">
+      ${offlineBanner()}
+      <button class="card card-interactive" data-act="open-ch" data-arg="13" id="continue-card">
+        <span class="t-caption muted">Continue reading</span>
+        <span class="t-title3">13.3 Graph BFS</span>
+        <span class="row t-caption muted" style="gap:6px"><span class="dot dot-graphs" aria-hidden="true"></span>Chapter 13 · Graph DFS &amp; BFS</span>
+        <div class="bar bar-sm" aria-hidden="true"><span style="width:33%"></span></div>
+      </button>
+      <div class="card" style="flex-direction:row;align-items:flex-start;gap:12px">${ic("info", 20, 'style="color:var(--accent-fg);margin-top:2px"')}
+        <p class="t-bodysm fg2">From your <strong>Patterns Handbook</strong>. Every scenario links to the section that teaches it, and you can open it mid-question with <strong>Study</strong>.</p></div>
+      ${parts}
+    </div></div>
+    ${tabbar("study")}
+  </section>`;
+};
+/* Chapter reader (§8.17) */
+SCREENS.reader = () => {
+  const chap = CH[S.readerCh], secs = CH_SECTIONS[S.readerCh];
+  const toc = secs.map(id => `<a class="chip" href="#sec-${id.replace(".", "-")}" data-act="toc" data-arg="${id}">${id}</a>`).join("");
+  const body = secs.map(id => `<section id="sec-${id.replace(".", "-")}" class="prose" style="scroll-margin-top:12px"><h2>${STUDY[id].title}</h2>${STUDY[id].html()}</section>`).join('<hr style="border:0;border-top:1px solid var(--line-subtle);margin:8px 0">');
+  return `<section class="screen" aria-label="Chapter ${chap.n}">
+    <header class="topbar s-top"><div class="col"><button class="btn btn-icon" data-act="go" data-arg="study" aria-label="Back to Study" id="reader-back">${ic("chevron-left", 24)}</button>
+      <div style="flex:1;min-width:0"><p class="t-caption muted">Chapter ${chap.n}</p><h1 class="t-title3">${chap.t}</h1></div></div></header>
+    <div class="scroll content" id="reader-scroll"><div class="col stack-12 ${fxc("enter", "a-step")}" style="gap:20px">
+      <div class="row" style="flex-wrap:wrap;gap:6px" aria-label="Sections">${toc}</div>
+      <p class="t-caption muted">Demo excerpt. The app bundles the full chapter from the handbook, diagrams included.</p>
+      ${body}
+    </div></div>
+    <div class="footer-cta" style="padding-bottom:max(12px, env(safe-area-inset-bottom));border-top:1px solid var(--line-subtle)"><div class="col">
+      <button class="btn btn-primary btn-lg" data-act="practice-ch" data-arg="${chap.n}" id="cta">${ic("play")} Practice this pattern</button></div></div>
   </section>`;
 };
 
@@ -1006,30 +1246,48 @@ SCREENS.settings = () => {
 function sheetHTML() {
   if (!S.sheet) return "";
   const scrim = `<div class="scrim ${fxc("sheet", "a-fade")}" ${S.sheet !== "explain" ? 'data-act="sheet-cancel"' : ""}></div>`;
+  if (S.sheet === "study") {
+    const sec = STUDY[S.study], chap = CH[sec.ch];
+    const back = S.studyReturn === "explain" ? "Back to explanation" : S.screen === "session" ? (S.phase === "q" ? "Back to question" : "Back to check") : "Close";
+    const note = S.screen === "session" && !S.studyReturn ? `<div class="studied-note">${ic("info", 16)}<span>Studying first is fine. This answer still counts, earns half XP, and comes back tomorrow to lock it in.</span></div>` : "";
+    return `<div class="overlay">${scrim}
+      <div class="sheet sheet-tall ${fxc("sheet", "a-sheet")}" role="dialog" aria-modal="true" aria-labelledby="sh-h">
+        <div class="scroll sheet-body">
+          <div class="src t-caption">${ic("book-open", 16)}<span>Patterns Handbook · Chapter ${chap.n}: ${chap.t}</span></div>
+          <h2 class="t-title2" id="sh-h" tabindex="-1">${sec.title}</h2>
+          ${note}<div class="prose">${sec.html()}</div>
+        </div>
+        <div class="sheet-foot fade"><button class="btn btn-primary btn-lg" data-act="study-close" id="study-close">${back}</button></div>
+      </div></div>`;
+  }
   if (S.sheet === "explain") {
-    const sc = SC[S.i], r = S.res[S.i], ok = r.match, xp = (r.match ? 10 : 0) + (r.check ? 5 : 0);
+    const sc = SC[S.i], r = S.res[S.i], ok = r.match, xp = (r.match ? matchXP(S.i) : 0) + (r.check ? 5 : 0);
     const others = sc.options.map((o, k) => ({ o, k })).filter(x => x.k !== sc.correct)
       .sort((a, b) => (b.k === r.pick) - (a.k === r.pick))
       .map(({ o, k }) => `<div class="why ${k === r.pick ? "mine" : ""}">${ic("circle-x", 16)}<b>${"ABCD"[k]} ${esc(o)}${k === r.pick ? ' <span class="tag">· Your pick</span>' : ""}</b><p>${sc.explain.others[k]}</p></div>`).join("");
     const chk = sc.check;
-    const chkText = r.check ? `${chk.label}: ${chk.type === "bigO" ? cx(chk.choices[chk.correct]) : chk.correct}` : `${chk.label}: missed`;
+    const chkText = chk.type === "order" ? `${chk.label}: ${r.check ? `<span class="seq">${chk.answer.join(" → ")}</span>` : `${r.inPlace} of ${r.total} in place`}`
+      : r.check ? `${chk.label}: ${chk.type === "bigO" ? cx(chk.choices[chk.correct]) : chk.correct}` : `${chk.label}: missed`;
+    const sec = STUDY[sc.study], chap = CH[sec.ch];
     const last = S.i === SC.length - 1;
     return `<div class="overlay">${scrim}
       <div class="sheet ${fxc("sheet", "a-sheet")}" role="dialog" aria-modal="true" aria-labelledby="sh-h">
         <div class="scroll sheet-body">
           <div class="sheet-head ${ok ? "ok" : "bad"}">${ic(ok ? "circle-check" : "circle-x", 24)}<h2 class="t-title2" id="sh-h" tabindex="-1">${ok ? "Correct" : "Not quite"}</h2>
-            ${xp ? `<span class="chip chip-xp">+${xp} XP</span>` : "<span></span>"}<span class="sub t-caption muted">${r.check ? 1 : 0} of 1 check passed</span></div>
+            ${xp ? `<span class="chip chip-xp">+${xp} XP</span>` : "<span></span>"}<span class="sub t-caption muted">${r.check ? 1 : 0} of 1 check passed${S.studied[S.i] ? " · studied first" : ""}</span></div>
           <div class="stack-8"><h3 class="t-title3">${sc.explain.title}</h3><p class="t-body">${sc.explain.body}</p>
             <div class="row" style="flex-wrap:wrap;gap:8px 16px;padding-top:4px">${sc.explain.cx.map(([l, v]) => `<span class="row t-bodysm fg2">${l} ${cx(v, "cx cx-chip")}</span>`).join("")}</div></div>
           <div class="stack-12"><button class="disclosure" data-act="others" aria-expanded="${S.othersOpen}" id="others-btn"><span class="t-title3">Why the others lose</span>${ic(S.othersOpen ? "chevron-up" : "chevron-down")}</button>
             ${S.othersOpen ? `<div class="stack-12">${others}</div>` : ""}</div>
           <div class="stack-8"><h3 class="t-title3">Your checks</h3><div class="check-row ${r.check ? "ok" : "bad"}">${ic(r.check ? "circle-check" : "circle-x")}<span>${chkText}</span></div></div>
+          <div class="stack-8"><h3 class="t-title3">Study the pattern</h3><div class="list">
+            <button class="li has-ic" data-act="study-from-explain" id="study-row">${ic("book-open")}<span class="li-main"><span class="li-title">${sec.title}</span><span class="li-desc">Handbook · Chapter ${chap.n}: ${chap.t}</span></span>${ic("chevron-right", 20, 'style="color:var(--fg-muted)"')}</button></div></div>
         </div>
         <div class="sheet-foot fade"><button class="btn btn-primary btn-lg" data-act="next" id="next-btn">${last ? "See summary" : "Next scenario"}</button></div>
       </div></div>`;
   }
   const C = {
-    end: { role: "dialog", title: "End this session?", body: `Your ${S.i * 1 + 8} answers are saved. Finish a session to count today's streak.`,
+    end: { role: "dialog", title: "End this session?", body: `Your ${S.i + 7} answers are saved. Finish a session to count today's streak.`,
       actions: `<button class="btn btn-primary btn-lg" data-act="end-session">End session</button><button class="btn btn-secondary btn-lg" data-act="sheet-cancel" id="cancel-btn">Keep going</button>` },
     reset: { role: "alertdialog", disc: true, title: "Reset all progress?", body: "XP, level, streak, reviews and history on this device are erased. This can't be undone.",
       actions: `<button class="btn btn-secondary btn-lg" data-act="export">${ic("download")} Export a backup first</button><button class="btn btn-destructive btn-lg" data-act="do-reset">Reset progress</button><button class="btn btn-secondary btn-lg" data-act="sheet-cancel" id="cancel-btn">Cancel</button>` },
@@ -1066,7 +1324,7 @@ function renderToast() {
   const t = S.toast;
   const inSession = S.screen === "session" || S.screen.startsWith("onb") || S.screen === "levelup";
   if (!t || inSession) { root.innerHTML = ""; fx.delete("toast"); return; }
-  const hasTabs = ["home", "stats", "settings"].includes(S.screen);
+  const hasTabs = ["home", "study", "stats", "settings"].includes(S.screen);
   const bottom = hasTabs ? "calc(4rem + env(safe-area-inset-bottom) + 8px)" : "calc(3.5rem + max(12px, env(safe-area-inset-bottom)) + 16px)";
   root.innerHTML = `<div class="toast-wrap" style="bottom:${bottom}"><div class="toast ${fxc("toast", "a-rise")}" role="${t.kind === "error" ? "alert" : "status"}">
     <span class="ti-${t.kind}">${ic(t.icon)}</span><p>${t.msg}</p>
@@ -1095,19 +1353,24 @@ function haptic(kind) {
 
 /* ---------- Flow ---------- */
 function go(screen) { S.screen = screen; S.sheet = null; fx.add("enter"); render(); const h = app.querySelector("h1"); }
-function startSession() {
-  Object.assign(S, { screen: "session", i: 0, phase: "q", sel: null, checked: false, res: [{}, {}], sheet: null, resume: null, othersOpen: true });
-  fx.add("enter"); render();
+function resetStep() { S.sel = null; S.checked = false; S.order = isOrder() ? [SC[S.i].check.graph.start] : []; }
+function startSession(from = 0, practice = false) {
+  Object.assign(S, { screen: "session", i: from, phase: "q", res: [{}, {}, {}], studied: [false, false, false], sheet: null, resume: null, othersOpen: true, practice, start: from });
+  resetStep(); fx.add("enter"); render();
 }
 function dockPrimary() {
   const sc = SC[S.i];
   if (!S.checked) {
-    if (S.sel == null) { announce("Select an answer first"); return; }
+    if (!ready()) { announce(isOrder() ? "Tap every node in order first" : "Select an answer first"); return; }
     S.checked = true; S.coach = false; S.guard = Date.now() + 350; fx.add("verdict");
     let ok, msg;
     if (S.phase === "q") {
       ok = S.sel === sc.correct; Object.assign(S.res[S.i], { match: ok, pick: S.sel });
-      msg = ok ? `Correct. ${sc.options[sc.correct]}. Plus 10 XP.` : `Not quite. Your pick: ${sc.options[S.sel]}. Best fit: ${sc.options[sc.correct]}.`;
+      msg = ok ? `Correct. ${sc.options[sc.correct]}. Plus ${matchXP(S.i)} XP.` : `Not quite. Your pick: ${sc.options[S.sel]}. Best fit: ${sc.options[sc.correct]}.`;
+    } else if (sc.check.type === "order") {
+      const inPlace = S.order.filter((id, k) => k > 0 && id === sc.check.answer[k]).length;
+      ok = inPlace === sc.check.answer.length - 1; Object.assign(S.res[S.i], { check: ok, inPlace, total: sc.check.answer.length - 1 });
+      msg = ok ? "Correct. Plus 5 XP." : `Not quite. ${inPlace} of ${sc.check.answer.length - 1} in the right place. BFS order: ${sc.check.answer.join(", ")}.`;
     } else {
       ok = S.sel === sc.check.correct; Object.assign(S.res[S.i], { check: ok });
       msg = ok ? "Correct. Plus 5 XP." : "Not quite.";
@@ -1116,24 +1379,27 @@ function dockPrimary() {
     document.getElementById("dock-btn")?.focus({ preventScroll: true });
   } else {
     if (Date.now() < S.guard) return;
-    if (S.phase === "q") { S.phase = "v"; S.sel = null; S.checked = false; fx.add("enter"); render(); document.getElementById("q-label")?.closest(".col"); }
+    if (S.phase === "q") { S.phase = "v"; resetStep(); fx.add("enter"); render(); }
     else { S.sheet = "explain"; S.othersOpen = true; fx.add("sheet"); render(); document.getElementById("sh-h")?.focus(); }
   }
 }
 function nextScenario() {
   S.sheet = null;
-  if (S.i < SC.length - 1) { S.i++; S.phase = "q"; S.sel = null; S.checked = false; fx.add("enter"); render(); }
+  if (S.i < SC.length - 1) { S.i++; S.phase = "q"; resetStep(); fx.add("enter"); render(); }
   else finishSession();
 }
 function finishSession() {
-  const demoXP = S.res.reduce((t, r) => t + (r.match ? 10 : 0) + (r.check ? 5 : 0), 0);
-  const correct = 6 + S.res.filter(r => r.match).length;
-  const prev = S.xp, gain = 95 + demoXP + 20;
-  S.sum = { xp: gain, correct, prev, r0: !!S.res[0].match, r1: !!S.res[1].match, levelUp: levelOf(prev + gain) > levelOf(prev) };
+  const itemXP = r => (r.match ? 0 : 0) + (r.check ? 5 : 0);
+  const demoXP = S.res.reduce((t, r, k) => t + (r.match ? matchXP(k) : 0) + (r.check ? 5 : 0), 0);
+  const correct = 5 + S.res.filter(r => r.match).length;
+  const prev = S.xp, gain = 80 + demoXP + 20;
+  const streakNew = !S.streakDone && !S.practice;
+  S.sum = { xp: gain, correct, prev, r: S.res.map(r => !!r.match), practice: S.practice, streakNew, levelUp: levelOf(prev + gain) > levelOf(prev) };
   S.xp = prev + gain;
-  if (!S.streakDone) { S.streak++; S.streakDone = true; }
+  if (streakNew) { S.streak++; S.streakDone = true; }
   S.sessionDone = true; S.resume = null; S.screen = "summary"; fx.add("enter"); render();
-  haptic("streak"); document.getElementById("sum-h")?.focus({ preventScroll: true });
+  if (streakNew) haptic("streak");
+  document.getElementById("sum-h")?.focus({ preventScroll: true });
   countUp(document.getElementById("sum-xp"), gain);
 }
 function countUp(el, to) {
@@ -1145,22 +1411,36 @@ function countUp(el, to) {
 function pick(arg) {
   if (S.checked) return;
   const sc = SC[S.i];
+  if (isOrder()) {
+    const g = sc.check.graph;
+    if (arg === g.start) return;
+    if (S.order[S.order.length - 1] === arg && S.order.length > 1) S.order.pop();
+    else if (!S.order.includes(arg) && S.order.length < sc.check.answer.length) S.order.push(arg);
+    render(); document.getElementById(`node-${arg}`)?.focus({ preventScroll: true }); return;
+  }
   const isTrace = S.phase === "v" && sc.check.type === "trace";
   S.sel = isTrace ? arg : Number(arg);
   render();
-  const id = isTrace ? `node-${arg}` : `opt-${arg}`;
-  document.getElementById(id)?.focus({ preventScroll: true });
+  document.getElementById(isTrace ? `node-${arg}` : `opt-${arg}`)?.focus({ preventScroll: true });
+}
+function openStudy(ref, ret) {
+  S.study = ref; S.studyReturn = ret || null; S.sheet = "study"; fx.add("sheet");
+  if (S.screen === "session" && !S.checked && !ret) S.studied[S.i] = true;
+  render(); document.getElementById("sh-h")?.focus();
 }
 function seed(kind) {
   // Reset to a clean pre-session profile, then build the requested demo state.
-  Object.assign(S, { xp: 220, streak: 12, streakDone: false, sessionDone: false, resume: null, sheet: null, coach: false, othersOpen: true });
+  Object.assign(S, { xp: 220, streak: 12, streakDone: false, sessionDone: false, resume: null, sheet: null, coach: false, othersOpen: true, practice: false, studied: [false, false, false] });
   const ok = { match: true, pick: 1, check: true };
-  if (kind === "q") { startSession(); return; }
-  if (kind === "bigo") { Object.assign(S, { screen: "session", i: 0, phase: "v", sel: null, checked: false, res: [{ ...ok, check: undefined }, {}] }); }
-  if (kind === "trace") { Object.assign(S, { screen: "session", i: 1, phase: "v", sel: null, checked: false, res: [ok, { match: true, pick: 1 }] }); }
-  if (kind === "explain") { Object.assign(S, { screen: "session", i: 0, phase: "v", sel: 1, checked: true, res: [{ ...ok }, {}], sheet: "explain" }); fx.add("sheet"); }
-  if (kind === "end") { Object.assign(S, { screen: "session", i: 0, phase: "q", sel: null, checked: false, res: [{}, {}], sheet: "end" }); fx.add("sheet"); }
-  if (kind === "summary" || kind === "levelup") { S.res = [{ ...ok }, { ...ok, check: true }]; finishSession(); if (kind === "levelup") { S.screen = "levelup"; fx.add("enter"); render(); } return; }
+  const sess = (i, phase, res) => { Object.assign(S, { screen: "session", i, phase, res }); resetStep(); };
+  if (kind === "q") { startSession(); S.coach = false; return; }
+  if (kind === "bigo") sess(0, "v", [{ match: true, pick: 1 }, {}, {}]);
+  if (kind === "trace") sess(1, "v", [ok, { match: true, pick: 1 }, {}]);
+  if (kind === "order") sess(2, "v", [ok, { ...ok }, { match: true, pick: 0 }]);
+  if (kind === "explain") { sess(0, "v", [{ ...ok }, {}, {}]); Object.assign(S, { sel: 1, checked: true, sheet: "explain" }); fx.add("sheet"); }
+  if (kind === "studysheet") { sess(1, "q", [ok, {}, {}]); openStudy("29.2"); return; }
+  if (kind === "end") { sess(0, "q", [{}, {}, {}]); S.sheet = "end"; fx.add("sheet"); }
+  if (kind === "summary" || kind === "levelup") { S.res = [{ ...ok }, { ...ok }, { match: true, pick: 0, check: true }]; finishSession(); if (kind === "levelup") { S.screen = "levelup"; fx.add("enter"); render(); } return; }
   fx.add("enter"); render();
 }
 
@@ -1181,7 +1461,16 @@ document.addEventListener("click", e => {
   if (el.getAttribute("aria-disabled") === "true" && act !== "dock") return;
   switch (act) {
     case "go": go(arg); break;
-    case "start": startSession(); break;
+    case "start": startSession(0, S.sessionDone); break;
+    case "undo": if (S.order.length > 1) { S.order.pop(); render(); document.getElementById("undo-btn")?.focus() || document.getElementById("trace-toggle")?.focus(); } break;
+    case "study": openStudy(arg); break;
+    case "study-from-explain": openStudy(SC[S.i].study, "explain"); break;
+    case "study-close": S.sheet = S.studyReturn === "explain" ? "explain" : null; S.studyReturn = null; render(); (document.getElementById("study-row") || document.getElementById("study-btn"))?.focus(); break;
+    case "open-ch":
+      if (!CH_SECTIONS[arg]) { showToast(null, { kind: "info", icon: "book-open", msg: `Chapter ${arg} is bundled in the app, not in this demo.` }); break; }
+      S.readerCh = +arg; S.read[arg] = Math.max(S.read[arg] || 0, 1); go("reader"); break;
+    case "toc": e.preventDefault(); document.getElementById("sec-" + arg.replace(".", "-"))?.scrollIntoView({ behavior: S.reduce ? "auto" : "smooth" }); break;
+    case "practice-ch": startSession(CH_PRACTICE[arg], true); break;
     case "resume": Object.assign(S, S.resume.state); S.resume = null; S.screen = "session"; fx.add("enter"); render(); break;
     case "pick": pick(arg); break;
     case "dock": dockPrimary(); break;
@@ -1193,7 +1482,7 @@ document.addEventListener("click", e => {
     case "sheet-cancel": S.sheet = null; render(); break;
     case "end-session": {
       const sc = SC[S.i];
-      S.resume = { progress: sc.progress, state: { i: S.i, phase: S.phase, sel: S.sel, checked: S.checked, res: S.res } };
+      S.resume = { progress: sc.progress, state: { i: S.i, phase: S.phase, sel: S.sel, checked: S.checked, res: S.res, order: S.order, studied: S.studied } };
       go("home"); break;
     }
     case "sum-done": if (S.sum && S.sum.levelUp) { S.screen = "levelup"; fx.add("enter"); render(); haptic("levelUp"); document.getElementById("lu-h")?.focus({ preventScroll: true }); } else { go("home"); showToast("update"); } break;
@@ -1224,7 +1513,8 @@ document.addEventListener("click", e => {
       go("onb1"); break;
     case "jump": {
       const map = { onb1: () => go("onb1"), onb2: () => go("onb2"), onb3: () => go("onb3"), home: () => { seed("home"); S.screen = "home"; render(); },
-        q: () => seed("q"), bigo: () => seed("bigo"), trace: () => seed("trace"), explain: () => seed("explain"), end: () => seed("end"),
+        q: () => seed("q"), bigo: () => seed("bigo"), trace: () => seed("trace"), explain: () => seed("explain"), end: () => seed("end"), order: () => seed("order"), studysheet: () => seed("studysheet"),
+        study: () => go("study"), reader: () => { S.readerCh = 13; go("reader"); },
         summary: () => seed("summary"), levelup: () => seed("levelup"), stats: () => go("stats"), settings: () => go("settings"),
         reset: () => { S.screen = "settings"; S.sheet = "reset"; fx.add("sheet"); render(); } };
       S.toast = null; map[arg](); break;
@@ -1242,7 +1532,8 @@ document.addEventListener("keydown", e => {
   if (e.target.closest && e.target.closest(".panel")) return;
   if (e.key === "Escape" && S.sheet) { e.preventDefault(); if (S.sheet === "explain") nextScenario(); else { S.sheet = null; render(); } return; }
   if (S.screen !== "session" || S.sheet) return;
-  const radios = [...app.querySelectorAll('[role="radiogroup"] [role="radio"]')];
+  if (e.key === "Backspace" && isOrder()) { e.preventDefault(); if (S.order.length > 1 && !S.checked) { S.order.pop(); render(); } return; }
+  const radios = [...app.querySelectorAll('[role="radiogroup"] [role="radio"], [role="group"] [data-act="pick"]')];
   if (/^[1-6]$/.test(e.key) && radios[+e.key - 1]) { e.preventDefault(); radios[+e.key - 1].click(); return; }
   if (["ArrowDown", "ArrowRight", "ArrowUp", "ArrowLeft"].includes(e.key) && radios.includes(document.activeElement)) {
     e.preventDefault();
@@ -1261,6 +1552,10 @@ const JUMPS = [
   ["q", "Scenario", "§8.4 Scenario Matching. Select an OptionTile, then Check. The same full-width button becomes Continue (350 ms input guard). Try a wrong answer to see the dashed border, x icon and “Your pick” caption."],
   ["bigo", "Big-O check", "§8.5 BigOPicker. Two columns, ascending order of growth, JetBrains Mono with real superscripts."],
   ["trace", "Trace check", "§8.6 TraceCanvas. SVG graph with 48 px HTML hit targets over the nodes. The List toggle is the non-visual alternative and shares the selection."],
+  ["order", "Order check", "§7.23 / §8.14 TraceCanvas order mode. Tap the nodes in BFS order; numbered badges show your sequence; tap the last one again (or Undo) to take it back. After Check, each node shows whether its position is right."],
+  ["studysheet", "Study sheet", "§7.24 / §8.15 StudySheet. Opened with Study mid-question: the linked handbook section in a tall sheet. Answering after studying still counts, at half XP, and comes back tomorrow."],
+  ["study", "Study library", "§8.16 Study tab. The Patterns Handbook bundled offline, grouped by part, with domain dots and reading progress."],
+  ["reader", "Chapter reader", "§8.17 Chapter reader. Section chips, handbook prose, highlighted C#, tables and a pre-rendered diagram; Practice this pattern starts a practice session."],
   ["explain", "Explanation", "§8.7 FeedbackSheet. Modal bottom sheet over a scrim; the only exit is the sticky Next scenario button."],
   ["summary", "Summary", "§8.8 Session summary. ProgressRing, XP count-up, StreakFlame fills, concept list with result icons plus domain dots."],
   ["levelup", "Level-up", "§8.9 Level-up. Badge pop-in with a ring sweep, staggered text, unlock card. Shown only after Summary."],
@@ -1275,7 +1570,8 @@ function currentJump() {
   if (S.sheet === "reset") return "reset";
   if (S.sheet === "end") return "end";
   if (S.sheet === "explain") return "explain";
-  if (S.screen === "session") return S.phase === "q" ? "q" : (SC[S.i].check.type === "bigO" ? "bigo" : "trace");
+  if (S.sheet === "study") return "studysheet";
+  if (S.screen === "session") return S.phase === "q" ? "q" : ({ bigO: "bigo", trace: "trace", order: "order" })[SC[S.i].check.type];
   return S.screen;
 }
 function updatePanel() {

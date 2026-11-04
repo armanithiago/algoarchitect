@@ -1,6 +1,6 @@
 # AlgoArchitect — UI Design System
 
-> Version 1.0 · 2026-11-04 · Status: proposed for Sprint 0 (E1-03 design tokens, E1-04 wireframes)
+> Version 1.1 · 2026-11-04 · Status: proposed for Sprint 0 (E1-03 design tokens, E1-04 wireframes) · 1.1 adds the Trace-order validation (§7.23, §8.14) and the Study area (§7.24, §8.15–8.17)
 > Scope: every MVP screen in *AlgoArchitect_MVP_Sprint_Plan.md* · Stack: React 18 + Vite + TypeScript, Tailwind CSS 4.3, Zustand, Dexie, `vite-plugin-pwa`
 > This document is the single source of truth for UI. If code and this document disagree, the code is wrong or this document needs a PR. Nothing ships with a colour, size, radius, shadow or duration that is not defined here.
 
@@ -39,6 +39,8 @@
 | Touch | **48 × 48 px minimum** for every target, 56 px for the primary button | Sprint DoD (≥ 48), Material 48 dp, and above Apple's 44 pt |
 | Thumb rule | Every primary action starts below **60 % of viewport height** on the 360 × 740 reference viewport | The PRD's "bottom 40 %" target, made measurable |
 | Interaction | **Select, then Check**, always on one full-width button in one place | Commute jolts must not create wrong answers; one thumb spot |
+| Navigation | **4 tabs:** Play · Study · Stats · Settings | Study is a destination of its own (the bundled Patterns Handbook), not a menu item |
+| Not sure? | **Study then solve**: a Study button on every question opens the handbook section; answering after studying counts at half XP and comes back tomorrow | Learning is the goal; never a dead end, never a penalty screen |
 | Motion | 80–320 ms UI motion, 480–800 ms for progress and celebration, everything has a reduced-motion fallback | Fast and functional; celebrate only at the end |
 | Haptics | `navigator.vibrate` on Android only, feature-detected, off-switch in Settings | WebKit has never shipped the Vibration API |
 | Tailwind | **v4.3** CSS-first `@theme`; the default palette is removed (`--color-*: initial`) | Only design-system tokens can compile |
@@ -103,6 +105,11 @@ AlgoArchitect sounds like **the senior engineer you liked pairing with**: precis
 | Export done | "Progress exported: algoarchitect-2026-11-04.json" | |
 | Import invalid | "That file isn't an AlgoArchitect export. Nothing was changed." | |
 | Import confirm | **Replace current progress?** · "Your current XP, streak and reviews will be overwritten by the file." | |
+| Study before answering | "Studying first is fine. This answer still counts, earns half XP, and comes back tomorrow to lock it in." | Neutral `inset` notice, never warning colors |
+| Correct after studying | **Correct** · chips (Studied) (+5 XP) | "Studied" is a neutral chip, not a badge of shame |
+| Trace order, right | **Correct** · `Y → B → D → A → E → C` | Mono sequence |
+| Trace order, wrong | **Not quite** · "BFS order: Y B D A E C" | Explanation adds "3 of 5 in place" |
+| Order incomplete (SR) | "Tap every node in order first" | Description of the disabled Check |
 | Storage blocked | "This browser mode can't save progress. You can play; nothing is kept after you close the app." | `warning` styling |
 | End session | **End this session?** · "Your 4 answers are saved. Finish a session to count today's streak." | |
 | Reset | **Reset all progress?** · "XP, level, streak, reviews and history on this device are erased. This can't be undone." | |
@@ -814,6 +821,8 @@ Icons are always `currentColor` and take their color from the text token of thei
 | Error | `circle-alert` | | Loading | `loader-circle` |
 | Theme: dark / light / system | `moon` / `sun` / `monitor-smartphone` | | Privacy | `shield-check` |
 | Haptics | `vibrate` | | Licenses | `file-text` |
+| Study tab, Study button, handbook source | `book-open` | | Undo last tap (trace order) | `undo-2` |
+| Back (reader) | `chevron-left` | | Order mode chip (optional) | `list-ordered` |
 | Disclosure | `chevron-down` / `chevron-up` | | Resume | `history` |
 
 ### 5.5 Illustration and empty-state style: "blueprint line art"
@@ -1114,7 +1123,7 @@ The fixed bottom region of every session step. It holds the choices (OptionTiles
 
 ### 7.6 BottomTabBar
 
-- **Tabs:** Play (`play`), Stats (`chart-column`), Settings (`settings`), at equal widths (≥ 120 px each at 360 px).
+- **Tabs:** Play (`play`), Study (`book-open`), Stats (`chart-column`), Settings (`settings`), at equal widths (90 px each at 360 px, well above the 48 px minimum).
 - **Size:** 64 px + `safe-area-inset-bottom`. Background `--surface`, top border 1 px `--line-subtle`, opaque (no blur).
 - **Item:** icon 24 over a `tab` label, stacked, gap 4. The whole column is the target (≥ 120 × 64).
 - **States:**
@@ -1126,9 +1135,9 @@ The fixed bottom region of every session step. It holds the choices (OptionTiles
 | pressed | icon scale 0.92 | | |
 | focus-visible | focus ring around the whole item (offset −2 px) | | |
 
-- **Visibility:** Home, Stats and Settings only. Hidden in sessions, onboarding, Summary and Level-up.
+- **Visibility:** Home, Study (library), Stats and Settings only. Hidden in sessions, onboarding, Summary, Level-up and the chapter reader.
 - **Accessibility:** `<nav aria-label="Main">` containing links with `aria-current="page"`. It is not a `tablist`: these are pages. Labels are always visible.
-- **Don't:** add a 4th tab, hide labels, put a badge counter on Play, or make the bar translucent (Safari 26 tints its chrome from fixed elements).
+- **Don't:** add a 5th tab, hide labels, put a badge counter on Play, or make the bar translucent (Safari 26 tints its chrome from fixed elements).
 
 ---
 
@@ -1390,6 +1399,99 @@ The anatomy, from top to bottom: a blueprint illustration (120 × 96, `aria-hidd
 
 ---
 
+### 7.23 TraceCanvas · order mode (Trace-order validation)
+
+The user taps the nodes, cells or elements **in the order the algorithm visits them** (BFS or DFS order, binary-search probes, an in-order traversal, Kahn's topological order). It reuses TraceCanvas (§7.4): same coordinate system, node specs, hit layer, List view and content layout rules. Only the selection model and the badges differ.
+
+**Anatomy.**
+
+```
+┌ Card ─────────────────────────────── [↶ Undo] [≡ List] ┐   Undo appears after the 1st tap
+│  Social graph · start Y (you)                           │
+│            (B)²───────(A)³                              │   order badge: 18 px disc at top-right,
+│   start  ╱      ╲       │                               │   mono 12/16 700, the step number
+│  ◎Y¹             ╲     (E)                              │
+│          ╲              │                               │
+│           (D)──────────(C)                              │
+└─────────────────────────────────────────────────────────┘
+Order: Y → B → A · 3 of 6 · tap the next node              ← readout, aria-live polite, mono sequence
+```
+
+**Selection model.**
+- `givenPrefix` targets are pre-filled (usually the start node as **1**) and can't be tapped.
+- Tapping an unnumbered target appends it with the next number. Tapping the **last** numbered target removes it (undo). Tapping any other numbered target does nothing, so a commute jolt can't reorder the sequence.
+- **Undo** (ghost `sm`, `undo-2`) removes the last tap. Keyboard: Backspace.
+- **Check** is `aria-disabled` until the sequence is complete ("Tap every node in order first").
+
+**States** (per node, after Check):
+
+| State | Body | Badge | Meaning |
+|---|---|---|---|
+| default | as §7.4 | none | not tapped yet |
+| sequenced (before Check) | `--accent-subtle` fill, 3 px `--accent` | `--accent` disc, `--on-accent` number | tapped, step n |
+| correct position | `--success-subtle`, 3 px `--success` **solid** | `--success` disc with the user's number | position matches the algorithm |
+| wrong position | `--error-subtle`, 3 px `--error` **dashed 4/3** | `--error` disc with the user's number | the List view also shows "Should be k" |
+| dimmed | as §7.4 | none | never needed (only if the answer is a prefix) |
+
+The badge always carries a **number** (a non-color cue), and right/wrong also differ by border style (solid/dashed), so the result survives every form of color blindness.
+
+**Verdict and explanation.**
+- AnswerDock verdict: **Correct** · `Y → B → D → A → E → C` (mono) + `+5 XP`; or **Not quite** · "BFS order: Y B D A E C" (≤ 40 characters, mono).
+- The readout becomes "Your order: …" so the two sequences can be compared.
+- FeedbackSheet "Your checks": `circle-check` + "Trace BFS order: Y → B → …", or `circle-x` + "Trace BFS order: 3 of 5 in place". No partial XP (§4.4 of the sprint plan).
+
+**List view.** The rows of §7.4 with the order number as a trailing pill (`radius-full`, 28 × 24, mono 12 700, the same colors as the badge). After Check, wrong rows add the caption "Should be k". This is the screen-reader path and is functionally identical.
+
+**Accessibility.** The canvas wrapper is `role="group"` (not a radiogroup: several targets are "on"). Each hit button uses `aria-pressed`, and its name gains ", step 3", then ", correct" or ", wrong position". The hidden summary adds "Tap nodes in visit order; tap the last one again to undo." After each tap, the readout announces the sequence so far.
+
+**Content rules** (content CI): 3–8 targets; the question states the tie-break ("Neighbors are queued in alphabetical order"); CI **runs the named algorithm** on the visual and rejects the item unless the result equals `answer` exactly. Use graphs where the common mistake gives a different order (for example BFS vs DFS), so the check discriminates.
+
+- **Do:** Show the start as step 1. Keep the canvas in the thumb zone, as in §7.4. **Don't:** Allow drag-to-reorder (too fiddly one-handed), auto-check on the last tap, or give partial XP.
+
+---
+
+### 7.24 Study components
+
+The Study area shows the **Patterns Handbook** inside the app, offline. Its components share one rule: handbook content is reading material, so it uses reading typography and never competes with the forward action.
+
+**StudyButton.** A ghost `sm` button, `book-open` 16 + "Study", at the right of the Stage header row on every question and check (stretch zone: it's a secondary action). Accessible name: "Study this pattern in the handbook". It's hidden after Check, when the explanation's StudyLink takes over.
+
+**StudySheet.** A modal bottom sheet (FeedbackSheet sizing, but **min 70 dvh, max 92 dvh**) with:
+1. A source line: `book-open` 16 + "Patterns Handbook · Chapter 29: Shortest Path Algorithms" (`caption`, `--fg-muted`).
+2. The section title (`title-2`), which gets focus on open.
+3. When opened before Check, a notice (`inset` Card, `info` 16): "Studying first is fine. This answer still counts, earns half XP, and comes back tomorrow to lock it in."
+4. The section body as **Prose** (below).
+5. A sticky footer, primary `lg`: "Back to question", "Back to check" or "Back to explanation".
+
+Opening it never resets the selection or the trace sequence. Esc and the footer close it; the scrim does too (unlike the explanation sheet, nothing is lost). Grading after studying shows a neutral **Studied** chip (`book-open` 16) next to the XP chip in the verdict strip, and "studied first" in the explanation caption. It is never red and never framed as a penalty.
+
+**StudyLink.** In the FeedbackSheet, a "Study the pattern" section with one `navigation` ListItem: `book-open` · "29.2 Dijkstra's Algorithm" · "Handbook · Chapter 29: Shortest Path Algorithms" · `chevron-right`. It opens the StudySheet with "Back to explanation".
+
+**ChapterRow.** A ListItem with a 32 × 32 `radius-sm` number tile (`--surface-hover`, mono 12 600, `--fg-secondary`), the chapter title (`body` 500), and a description line: an optional domain `dot` + short domain name, then "3 of 10 sections read" (`body-sm`, `--fg-muted`). Trailing `chevron-right`. Rows are grouped in Cards under `overline` part labels ("Part V · Graph Patterns").
+
+**ContinueCard.** An `interactive` Card at the top of the library: "Continue reading" (`caption`), the section title (`title-3`), the chapter line with its domain dot, and a 4 px progress bar (`--xp` on `--track`) showing the chapter's read share.
+
+**Prose** (reader typography). Reading text uses `body-lg` (17/26) at the 480 px column, so lines stay near 60 characters.
+
+| Element | Spec |
+|---|---|
+| h2 (section) | `title-2`, 8 px extra space above |
+| h3 | `title-3` |
+| Paragraph, list item | `body-lg`, `--fg`; lists indent 22 px, 4 px between items |
+| Strong | weight 600 (no italics, §3.3) |
+| Inline code | mono 0.9 em on `--surface-hover`, `radius-xs`, 0 4 px padding |
+| Code block | mono 13/20, `--surface` (in a sheet: `--canvas`), 1 px `--line-subtle`, `radius-md`, padding 12/16, **horizontal scroll inside the block** (never the page), ligatures off, `tab-size: 4` |
+| Syntax colors | `--code-keyword` (accent-fg), `--code-type` (graphs-fg), `--code-string` (sorting-fg), `--code-number` (dp-fg), `--code-comment` (fg-muted). All pass 4.5:1 on both code backgrounds in both themes because they reuse the `-fg` text tokens |
+| Table | inside a 1 px `--line-subtle`, `radius-md` scroll wrapper (`tabindex="0"`, labelled); `body-sm`; header row `--surface-hover` 600 |
+| Diagram | pre-rendered SVG (sprint plan §4.6) in a `--surface` frame, `radius-md`, padding 12; strokes and text use tokens; `role="img"` with the caption as its accessible name |
+| Big-O in prose | the Complexity primitive (§7.22), so `O(V^2)` gets real superscripts |
+
+**Reader footer.** A sticky footer with a 1 px `--line-subtle` top border and a primary `lg` "Practice this pattern" (`play`), in the thumb zone. It starts a practice session with the chapter's scenarios (it doesn't change review dates). Chapters without mapped scenarios show no footer.
+
+- **Do:** Keep the handbook's own words, code and diagrams; credit it on every sheet. **Don't:** Paraphrase the handbook in the app, truncate code, wrap code lines, or show the answer to the current question anywhere in the StudySheet chrome.
+
+---
+
 ## 8. Screens and wireframes
 
 ### 8.0 How to read the wireframes
@@ -1432,7 +1534,7 @@ The anatomy, from top to bottom: a blueprint illustration (120 × 96, `aria-hidd
                             ▼
   ┌──────────────────────────────────────────────────┐
   │ MINI-VALIDATION i of n (n = 1–2)    [validation] │
-  │ BigOPicker | TraceCanvas → select → Check        │
+  │ BigOPicker | TraceCanvas (first step or order)   │
   │ verdict strip → Continue  (loops while i < n)    │
   └─────────────────────────┬────────────────────────┘
                             │ Continue after last check
@@ -1456,6 +1558,11 @@ The anatomy, from top to bottom: a blueprint illustration (120 × 96, `aria-hidd
                             │ no                                                   │
                             ▼                                                      │
                           HOME ◀───────────────────────────────────────────────────┘
+
+  Not sure of the answer (any QUESTION or MINI-VALIDATION step)
+  [Study] ──▶ StudySheet (handbook section) ──▶ Back to question (state kept; graded as "studied")
+  FEEDBACK ── "Study the pattern" ──▶ StudySheet ──▶ Back to explanation
+  Study tab ──▶ Library ──▶ Chapter reader ──▶ Practice this pattern ──▶ QUESTION (practice session)
 
   Exits and interrupts
   [X] or system Back during any session step ──▶ ConfirmSheet “End this session?”
@@ -2317,6 +2424,168 @@ Notes:
 | Service worker failed to install | Nothing is shown to the user; it is logged. The app still works online |
 | Content load failure (corrupt cache) | A full-screen EmptyState: "Couldn't load scenarios. Reload to try again." with a primary "Reload" button |
 
+### 8.14 Mini-validation · Trace order (E6-07)
+
+Components: SessionTopBar, StudyButton, `title-3` question, TraceCanvas order mode (§7.23), Undo and List toggles, readout, Button.
+
+```
+┌──────────────────────────────────────┐  zone
+│                                      │░
+│  [X]  ▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰  10 / 10  │░
+│                                      │░
+│  Check 1 of 1 · Order       [▯ Study]│░  caption · StudyButton (ghost sm)
+│                                      │░
+│  Tap the nodes in the order BFS      │░  title-3; states the tie-break
+│  visits them from Y. Neighbors are   │░
+│  queued in alphabetical order.       │▒
+│                                      │▒
+│                                      │▒
+│                                      │▒
+│  ┌ Social graph · start Y [↶Undo][≡]┐│▒  TraceCanvas order mode
+│  │              ②          ③        ││▒  numbered badges = tap order
+│  │   start    (B)────────(A)        ││▒
+│  │   ◎Y①    ╱    ╲        │         ││█  start pre-filled as 1
+│  │          ╲      ╲      (E)       ││█
+│  │           (D)──────────(C)       ││█
+│  └──────────────────────────────────┘│█
+│  Order: Y → B → A · 3 of 6 · tap the │█  readout (aria-live), mono sequence
+│  next node                           │█
+│                                      │█
+│ ┌┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┐ │█  disabled until all 6 are tapped
+│ ┆              Check               ┆ │█
+│ └┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┘ │█
+└──────────────────────────────────────┘
+```
+
+**After Check, wrong order** (user tapped Y B A D E C):
+
+```
+┌──────────────────────────────────────┐
+│  │   ◎Y①✓   (B)②✓ ┄┄ (A)③✗          ││  correct positions: solid green, number badge
+│  │          (D)④✗      (E)⑤✓  (C)⑥✓ ││  wrong positions: dashed red, number badge
+│  Your order: Y → B → A → D → E → C   │
+│ [x] Not quite                        │  verdict strip
+│     BFS order: Y B D A E C           │  mono, ≤ 40 characters
+│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ │
+│ ┃             Continue             ┃ │
+│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ │
+└──────────────────────────────────────┘
+```
+
+Notes: List view rows show the order pill and, when wrong, "Should be k". Interrupting the app keeps the sequence (persisted after every tap). Offline: no change.
+
+### 8.15 Study then solve (E6-05)
+
+The flow when the user doesn't know the answer:
+
+```
+  QUESTION / CHECK ──tap [Study]──▶ StudySheet (linked section, notice "Studying first is fine…")
+        ▲                                   │
+        └────────── Back to question ◀──────┘   selection / sequence kept; attempt flagged `studied`
+        │
+        ▼ Check
+  verdict strip: [v] Correct  (▯ Studied) (+5 XP)   → scenario due tomorrow (q capped at 3)
+        │
+        ▼ … FeedbackSheet ── "Study the pattern" row ──▶ StudySheet ── Back to explanation ──┘
+```
+
+**StudySheet over a question:**
+
+```
+┌──────────────────────────────────────┐  zone
+│▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓│░  scrim (tap = back, nothing is lost)
+│╭────────────────────────────────────╮│░
+││ [▯] Patterns Handbook · Chapter 29: ││░  source line, caption fg-muted
+││     Shortest Path Algorithms        ││░
+││ 29.2 Dijkstra's Algorithm          ││░  title-2, focused on open
+││ ┌────────────────────────────────┐ ││░
+││ │ (i) Studying first is fine. This│ ││▒  inset notice (only before Check)
+││ │ answer still counts, earns half │ ││▒
+││ │ XP, and comes back tomorrow.    │ ││▒
+││ └────────────────────────────────┘ ││▒
+││ Dijkstra's algorithm is a greedy   ││▒  Prose body-lg
+││ algorithm. It maintains a set of   ││▒
+││ finalized vertices …               ││▒
+││ ┌────────────────────────────────┐ ││▒
+││ │ var pq = new PriorityQueue<…>();│ ││█  code block, scrolls sideways inside
+││ │ while (pq.Count > 0) { … }      │ ││█
+││ └────────────────────────────────┘ ││█
+││░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░││█  body scrolls; footer sticky
+││ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ ││█
+││ ┃        Back to question        ┃ ││█
+││ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ ││█
+│╰────────────────────────────────────╯│█
+└──────────────────────────────────────┘
+```
+
+### 8.16 Study tab · library (E6-03)
+
+Components: TopBar, OfflineBanner, ContinueCard, info Card, ChapterRow groups with `overline` part labels, BottomTabBar (4 tabs).
+
+```
+┌──────────────────────────────────────┐  zone
+│  Study            30 chapters · offline│░  TopBar title-2 · caption
+│ ┌──────────────────────────────────┐ │░
+│ │ Continue reading                 │ │░  ContinueCard (interactive)
+│ │ 13.3 Graph BFS                   │ │░
+│ │ ● Chapter 13 · Graph DFS & BFS   │ │░
+│ │ ▆▆▆▆░░░░░░░░░░░░░░░░             │ │▒  4 px read share
+│ └──────────────────────────────────┘ │▒
+│  PART I · FOUNDATIONS                │▒  overline
+│ ┌──────────────────────────────────┐ │▒
+│ │ [1]  Mastering Big-O Notation  > │ │▒  ChapterRow
+│ │      10 sections                 │ │▒
+│ ├──────────────────────────────────┤ │▒
+│ │ [2]  Data Structure Toolkit    > │ │▒
+│ │      ● Hashing · 2 of 9 read     │ │▒
+│ └──────────────────────────────────┘ │█
+│  PART II · ARRAY & POINTER PATTERNS  │█  (scroll continues: Parts III–XI,
+│ ┌──────────────────────────────────┐ │█   Appendices A–D)
+│ │ [3]  Two Pointers              > │ │█
+│ └──────────────────────────────────┘ │█
+│──────────────────────────────────────│█
+│   [>]      [▯]      [|]      [o]     │█  Play · Study · Stats · Settings
+│   Play    Study    Stats  Settings   │█
+└──────────────────────────────────────┘
+```
+
+States: first visit (no ContinueCard; the info Card explains "From your Patterns Handbook…"); offline (banner only, everything works); bundle not yet precached and offline (rows of uncached chapters show "Available after your next online launch", `--fg-muted`, not tappable).
+
+### 8.17 Chapter reader (E6-04)
+
+Components: TopBar with `chevron-left` back and two-line title, section Chips (anchor links), Prose, reader footer with "Practice this pattern".
+
+```
+┌──────────────────────────────────────┐  zone
+│  [<]  Chapter 13                     │░  caption + title-3 (wraps, never truncates)
+│       Graph DFS & BFS                │░
+│  (13.1) (13.2) (13.3) (13.4) …       │░  section chips, horizontal wrap
+│                                      │░
+│  13.3 Graph BFS                      │░  h2 title-2
+│  Breadth-First Search explores nodes │▒  body-lg
+│  level by level …                    │▒
+│ ┌──────────────────────────────────┐ │▒  code block, highlighted C#
+│ │ public static void Bfs(…)        │ │▒
+│ │ {                                │ │▒
+│ │     var visited = new HashSet…   │ │▒
+│ └──────────────────────────────────┘ │▒
+│ ┌──────────────────────────────────┐ │▒  pre-rendered diagram (SVG, tokens)
+│ │  (0)─(1)─(3)─(5)   Level 0…3     │ │█
+│ │    ╲ (2)─(4)                     │ │█
+│ └──────────────────────────────────┘ │█
+│  13.9 Pattern identification signals │█
+│ ┌───────────────────┬──────────────┐ │█  table in scroll wrapper
+│ │ Signal in problem │ Technique    │ │█
+│ └───────────────────┴──────────────┘ │█
+│──────────────────────────────────────│█
+│ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓ │█  reader footer (sticky)
+│ ┃     [>] Practice this pattern    ┃ │█
+│ ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ │█
+└──────────────────────────────────────┘
+```
+
+Notes: the reading position (section + scroll %) is saved to the `reading` store on pause and restored on open. No tab bar in the reader (it's a pushed screen; back returns to the library). Text zoom at 200 % reflows prose; code and tables scroll inside their frames.
+
 ---
 
 ## 9. Accessibility checklist
@@ -2606,6 +2875,9 @@ Semantic suffixes have one meaning everywhere: `-subtle` = tinted background, `-
   --info-line: var(--accent-line);
   --info-fg: var(--accent-fg);
   --xp: var(--accent);
+  /* Code syntax (Study reader, §7.24): reuse text-safe -fg tokens */
+  --code-keyword: var(--accent-fg); --code-type: var(--cyan-11); --code-string: var(--orange-11);
+  --code-number: var(--violet-11); --code-comment: var(--fg-muted);
   /* Domains */
   --graphs: var(--cyan-9); --graphs-subtle: var(--cyan-3); --graphs-line: var(--cyan-6); --graphs-fg: var(--cyan-11);
   --dp: var(--violet-9); --dp-subtle: var(--violet-3); --dp-line: var(--violet-6); --dp-fg: var(--violet-11);
@@ -2675,6 +2947,9 @@ Semantic suffixes have one meaning everywhere: `-subtle` = tinted background, `-
   --info-line: var(--accent-line);
   --info-fg: var(--accent-fg);
   --xp: var(--accent);
+  /* Code syntax (Study reader, §7.24): reuse text-safe -fg tokens */
+  --code-keyword: var(--accent-fg); --code-type: var(--cyan-11); --code-string: var(--orange-11);
+  --code-number: var(--violet-11); --code-comment: var(--fg-muted);
   /* Domains */
   --graphs: var(--cyan-9); --graphs-subtle: var(--cyan-3); --graphs-line: var(--cyan-6); --graphs-fg: var(--cyan-11);
   --dp: var(--violet-9); --dp-subtle: var(--violet-3); --dp-line: var(--violet-6); --dp-fg: var(--violet-11);
