@@ -15,7 +15,18 @@ import {
 } from "@/domain/session/types";
 import { useSessionStore } from "@/stores/session";
 
-export const seedScenarios: Scenario[] = ScenarioBundleSchema.parse(bundle).scenarios;
+const allScenarios: Scenario[] = ScenarioBundleSchema.parse(bundle).scenarios;
+const FIXTURE_IDS = ["hashing-001", "graphs-001", "graphs-002"];
+/** The whole bundle, with three known fixtures first. Tests rely on those three being at indexes 0-2 and do not
+ *  depend on the bundle's file order or size. */
+export const seedScenarios: Scenario[] = [
+  ...FIXTURE_IDS.map((id) => {
+    const found = allScenarios.find((s) => s.id === id);
+    if (!found) throw new Error(`fixture scenario ${id} is missing from the content bundle`);
+    return found;
+  }),
+  ...allScenarios.filter((s) => !FIXTURE_IDS.includes(s.id)),
+];
 
 /** `optionOrder` = authored order unless given (the wrong-pick tests want a known display order). */
 export function makeItems(count: number, order?: string[]): SessionItem[] {

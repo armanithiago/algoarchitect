@@ -1,69 +1,7 @@
 {
   "schema": 1,
-  "contentVersion": 1,
+  "contentVersion": 2,
   "scenarios": [
-    {
-      "id": "hashing-001",
-      "version": 1,
-      "domain": "hashing",
-      "concept": "consistent-hashing",
-      "difficulty": 2,
-      "title": "Cache cluster resizing",
-      "prompt": "Your CDN shards 40M cache keys across 12 nodes. Nodes join and leave during traffic spikes. Map keys to nodes so that the fewest keys move when the pool changes.",
-      "options": [
-        {
-          "id": "a",
-          "label": "Modulo hashing (key % n)",
-          "rationale": "Changing n remaps almost every key, so the cache goes cold after a resize."
-        },
-        {
-          "id": "b",
-          "label": "Consistent hashing",
-          "rationale": "Adding or removing a node remaps only about 1/n of the keys, so caches stay warm."
-        },
-        {
-          "id": "c",
-          "label": "Sorted array + binary search",
-          "rationale": "Finds keys quickly but does not solve remapping on its own."
-        },
-        {
-          "id": "d",
-          "label": "Min-heap by node load",
-          "rationale": "Balances load, not key placement."
-        }
-      ],
-      "correctOptionId": "b",
-      "explanation": "Consistent hashing places nodes and keys on a ring, so adding or removing a node remaps only about 1/n of the keys and caches stay warm during resizes. Virtual nodes keep the load even.",
-      "complexity": {
-        "time": "O(log n)",
-        "space": "O(n)"
-      },
-      "validations": [
-        {
-          "type": "bigO",
-          "measure": "time",
-          "question": "Consistent hashing: lookup cost for one key with n nodes on the ring (sorted ring, binary search)?",
-          "choices": [
-            "O(1)",
-            "O(log n)",
-            "O(n)",
-            "O(n log n)",
-            "O(n^2)",
-            "O(2^n)"
-          ],
-          "answer": "O(log n)"
-        }
-      ],
-      "study": [
-        {
-          "sectionId": "2.3"
-        }
-      ],
-      "tags": [
-        "caching",
-        "sharding"
-      ]
-    },
     {
       "id": "graphs-001",
       "version": 1,
@@ -460,181 +398,764 @@
       ]
     },
     {
-      "id": "hashing-002",
       "version": 1,
-      "domain": "hashing",
-      "concept": "min-heap",
+      "id": "graphs-004",
+      "domain": "graphs",
+      "concept": "flood-fill",
       "difficulty": 1,
-      "title": "Job scheduler queue",
-      "prompt": "A scheduler holds thousands of pending jobs, each with a run-at time. New jobs arrive constantly, and a worker repeatedly needs the job due soonest. Pick a structure that keeps both operations cheap.",
+      "title": "Count flooded regions",
+      "prompt": "A satellite water mask is a 4000 x 4000 grid of cells. Two water cells belong to the same flooded region if they touch left, right, up or down. Report how many separate regions exist.",
       "options": [
         {
           "id": "a",
-          "label": "Unsorted array, scan for min",
-          "rationale": "Inserting is cheap, but finding the soonest job scans every pending job each time."
+          "label": "Dijkstra from the top-left",
+          "rationale": "Computes weighted distances from one source; it does not group cells into regions."
         },
         {
           "id": "b",
-          "label": "Always-sorted array",
-          "rationale": "Taking the soonest job is cheap, but every insert shifts elements and costs O(n)."
+          "label": "Compare every pair of cells",
+          "rationale": "About 10^14 pairs for 16M cells, and chains of touching cells still need merging."
         },
         {
           "id": "c",
-          "label": "Hash map keyed by run time",
-          "rationale": "Great for exact lookups, but it has no order, so finding the minimum still scans all keys."
+          "label": "Flood fill from new cells",
+          "rationale": "Each unvisited water cell starts a DFS or BFS that marks its whole region, so every cell is touched once."
         },
         {
           "id": "d",
-          "label": "Min-heap on run-at time",
-          "rationale": "Peeking is O(1), and insert and extract-min cost O(log n) without maintaining a full ordering."
+          "label": "Sort cells, binary search",
+          "rationale": "Sorting by position gives lookup, not connectivity; touching chains still have to be followed."
         }
       ],
-      "correctOptionId": "d",
-      "explanation": "A min-heap keeps the earliest run-at time at the root, so peeking is O(1) while insert and extract-min cost O(log n). The scheduler never needs the full sorted order, only the next job, so a heap does less work than keeping everything sorted.",
+      "correctOptionId": "c",
+      "explanation": "Scan the grid; each unvisited water cell starts a flood fill (DFS or BFS) that marks its whole region, and each start adds one to the count. Every cell is visited a constant number of times. At this size use an explicit stack or queue, since deep recursion can overflow.",
       "complexity": {
-        "time": "O(log n)",
+        "time": "O(n)",
         "space": "O(n)"
       },
       "validations": [
         {
-          "type": "traceFirstStep",
-          "question": "A min-heap removed its root, and the last job (10) moved to the root. Which node does it swap with first?",
+          "type": "bigO",
+          "measure": "time",
+          "question": "Flood fill labels every region of a grid with n cells in total. What is the time cost?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceOrder",
+          "question": "Tap the order a depth-first flood fill reaches the cells, starting at A. Neighbors are tried in alphabetical order.",
           "visual": {
-            "kind": "tree",
-            "caption": "Min-heap · last job moved to the root",
-            "start": "r",
+            "kind": "graph",
+            "caption": "Water cells; edges join touching cells",
+            "start": "A",
             "nodes": [
               {
-                "id": "r",
-                "label": "10",
+                "id": "A",
+                "label": "A",
+                "x": 60,
+                "y": 60
+              },
+              {
+                "id": "B",
+                "label": "B",
                 "x": 160,
-                "y": 40
+                "y": 60
               },
               {
-                "id": "a",
-                "label": "5",
-                "x": 90,
-                "y": 115
+                "id": "C",
+                "label": "C",
+                "x": 260,
+                "y": 60
               },
               {
-                "id": "b",
-                "label": "8",
-                "x": 230,
-                "y": 115
+                "id": "D",
+                "label": "D",
+                "x": 60,
+                "y": 170
               },
               {
-                "id": "c",
-                "label": "9",
-                "x": 50,
-                "y": 190
+                "id": "E",
+                "label": "E",
+                "x": 160,
+                "y": 170
               },
               {
-                "id": "d",
-                "label": "6",
-                "x": 130,
-                "y": 190
-              },
-              {
-                "id": "e",
-                "label": "12",
-                "x": 210,
-                "y": 190
+                "id": "F",
+                "label": "F",
+                "x": 260,
+                "y": 170
               }
             ],
             "edges": [
               {
-                "from": "r",
-                "to": "a"
+                "from": "A",
+                "to": "B"
               },
               {
-                "from": "r",
-                "to": "b"
+                "from": "B",
+                "to": "C"
               },
               {
-                "from": "a",
-                "to": "c"
+                "from": "A",
+                "to": "D"
               },
               {
-                "from": "a",
-                "to": "d"
+                "from": "B",
+                "to": "E"
               },
               {
-                "from": "b",
-                "to": "e"
+                "from": "E",
+                "to": "F"
+              },
+              {
+                "from": "C",
+                "to": "F"
               }
             ]
           },
-          "answerTargetId": "a"
+          "algorithm": "dfs",
+          "tieBreak": "alphabetical",
+          "givenPrefix": 1,
+          "answer": [
+            "A",
+            "B",
+            "C",
+            "F",
+            "E",
+            "D"
+          ]
         }
       ],
       "study": [
         {
-          "sectionId": "2.6"
+          "sectionId": "13.5"
+        }
+      ],
+      "tags": [
+        "grids",
+        "regions"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "graphs-005",
+      "domain": "graphs",
+      "concept": "bipartite-check",
+      "difficulty": 1,
+      "title": "Two-room conference split",
+      "prompt": "A conference has two rooms. Some speaker pairs clash and cannot share a room. Decide whether every speaker can be placed so no clashing pair sits together, and output one valid split.",
+      "options": [
+        {
+          "id": "a",
+          "label": "BFS two-coloring",
+          "rationale": "Alternate colors level by level; an edge joining two same-colored speakers proves no valid split exists."
+        },
+        {
+          "id": "b",
+          "label": "Plain union-find on clashes",
+          "rationale": "Plain union-find merges clashing speakers into one set, the opposite of separating them."
+        },
+        {
+          "id": "c",
+          "label": "Kruskal spanning tree",
+          "rationale": "Picks cheap edges to connect everything; it says nothing about which room each speaker takes."
+        },
+        {
+          "id": "d",
+          "label": "Topological sort",
+          "rationale": "Needs directed edges and no cycles; clashes are undirected, and an order is not a two-way split."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Two-color the clash graph with BFS: color the start, give each neighbor the opposite color, and fail if an edge joins two same-colored speakers. A split exists exactly when the graph has no odd-length cycle. Linear time; repeat from each unvisited speaker for separate groups.",
+      "complexity": {
+        "time": "O(V + E)",
+        "space": "O(V)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "BFS two-coloring on V speakers and E clash pairs (adjacency lists): time?",
+          "choices": [
+            "O(V)",
+            "O(V + E)",
+            "O(V^2)",
+            "O(2^V)"
+          ],
+          "answer": "O(V + E)"
+        },
+        {
+          "type": "traceOrder",
+          "question": "Tap the order BFS visits the speakers, starting at S1. Neighbors are queued in alphabetical order.",
+          "visual": {
+            "kind": "graph",
+            "caption": "Edges join speakers who clash",
+            "start": "S1",
+            "nodes": [
+              {
+                "id": "S1",
+                "label": "S1",
+                "x": 60,
+                "y": 70
+              },
+              {
+                "id": "S2",
+                "label": "S2",
+                "x": 160,
+                "y": 70
+              },
+              {
+                "id": "S3",
+                "label": "S3",
+                "x": 260,
+                "y": 70
+              },
+              {
+                "id": "S4",
+                "label": "S4",
+                "x": 260,
+                "y": 170
+              },
+              {
+                "id": "S5",
+                "label": "S5",
+                "x": 160,
+                "y": 170
+              },
+              {
+                "id": "S6",
+                "label": "S6",
+                "x": 60,
+                "y": 170
+              }
+            ],
+            "edges": [
+              {
+                "from": "S1",
+                "to": "S2"
+              },
+              {
+                "from": "S2",
+                "to": "S3"
+              },
+              {
+                "from": "S3",
+                "to": "S4"
+              },
+              {
+                "from": "S4",
+                "to": "S5"
+              },
+              {
+                "from": "S5",
+                "to": "S6"
+              },
+              {
+                "from": "S6",
+                "to": "S1"
+              },
+              {
+                "from": "S2",
+                "to": "S5"
+              }
+            ]
+          },
+          "algorithm": "bfs",
+          "tieBreak": "alphabetical",
+          "givenPrefix": 1,
+          "answer": [
+            "S1",
+            "S2",
+            "S6",
+            "S3",
+            "S5",
+            "S4"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "13.6"
         }
       ],
       "tags": [
         "scheduling",
-        "priority-queue"
+        "two-coloring"
       ]
     },
     {
-      "id": "hashing-003",
       "version": 1,
-      "domain": "hashing",
-      "concept": "top-k-heap",
-      "difficulty": 3,
-      "title": "Trending shelf",
-      "prompt": "A feed ranks 5M posts by engagement score. The trending shelf needs only the 10 highest scores, and the job must not sort everything or keep more than a handful of candidates in memory.",
+      "id": "graphs-006",
+      "domain": "graphs",
+      "concept": "minimum-spanning-tree",
+      "difficulty": 2,
+      "title": "Cabling six offices",
+      "prompt": "A company must connect six offices with fiber. Each possible link has a trenching cost. Pick links so every office can reach every other and the total cost is as low as possible.",
       "options": [
         {
           "id": "a",
-          "label": "Min-heap capped at size 10",
-          "rationale": "The root is the weakest of the current top 10, so a new score replaces it only if larger. O(n log k) time, O(k) space."
+          "label": "Dijkstra from headquarters",
+          "rationale": "Minimizes each office's distance to HQ, not the total cable laid; its shortest-path tree can cost more overall."
         },
         {
           "id": "b",
-          "label": "Max-heap of all scores",
-          "rationale": "Ten pops are cheap, but the heap holds all 5M scores and breaks the memory limit."
+          "label": "Minimum spanning tree",
+          "rationale": "Connects every office with the lowest total link cost and no redundant loops."
         },
         {
           "id": "c",
-          "label": "Sort all, take the first 10",
-          "rationale": "Costs O(n log n) time and holds everything, far more work than ten values need."
+          "label": "BFS tree from headquarters",
+          "rationale": "Minimizes the number of hops and ignores link cost entirely."
         },
         {
           "id": "d",
-          "label": "Max-heap capped at size 10",
-          "rationale": "Its root is the largest kept score, so the smallest of the top 10, the one to evict, is not at hand."
+          "label": "Topological sort of offices",
+          "rationale": "Orders directed dependencies; fiber links are undirected and carry costs."
         }
       ],
-      "correctOptionId": "a",
-      "explanation": "To keep the K largest, use a min-heap of size K. Its root is the smallest of the current top K, so each new score is compared with the root in O(1) and replaces it in O(log K). Total O(n log K) time and O(K) space, which beats sorting when K is small.",
+      "correctOptionId": "b",
+      "explanation": "A minimum spanning tree connects all vertices with the lowest total edge weight and no cycles. Prim grows it from a start node by always adding the cheapest edge leaving the tree; Kruskal sorts edges and adds each one that joins two components (using union-find). Both are about O(E log V).",
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "Prim's algorithm starts at HQ and repeatedly adds the cheapest link leaving the tree. Tap the office it connects first.",
+          "visual": {
+            "kind": "graph",
+            "caption": "Link labels are trenching costs",
+            "start": "HQ",
+            "nodes": [
+              {
+                "id": "HQ",
+                "label": "HQ",
+                "x": 50,
+                "y": 120
+              },
+              {
+                "id": "A",
+                "label": "A",
+                "x": 140,
+                "y": 50
+              },
+              {
+                "id": "B",
+                "label": "B",
+                "x": 140,
+                "y": 190
+              },
+              {
+                "id": "C",
+                "label": "C",
+                "x": 230,
+                "y": 50
+              },
+              {
+                "id": "D",
+                "label": "D",
+                "x": 230,
+                "y": 190
+              },
+              {
+                "id": "E",
+                "label": "E",
+                "x": 285,
+                "y": 120
+              }
+            ],
+            "edges": [
+              {
+                "from": "HQ",
+                "to": "A",
+                "weight": 4
+              },
+              {
+                "from": "HQ",
+                "to": "B",
+                "weight": 2
+              },
+              {
+                "from": "A",
+                "to": "B",
+                "weight": 5
+              },
+              {
+                "from": "A",
+                "to": "C",
+                "weight": 6
+              },
+              {
+                "from": "B",
+                "to": "D",
+                "weight": 3
+              },
+              {
+                "from": "C",
+                "to": "D",
+                "weight": 5
+              },
+              {
+                "from": "C",
+                "to": "E",
+                "weight": 7
+              },
+              {
+                "from": "D",
+                "to": "E",
+                "weight": 4
+              }
+            ]
+          },
+          "answerTargetId": "B"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "29.5"
+        }
+      ],
+      "tags": [
+        "networks",
+        "cost"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "graphs-007",
+      "domain": "graphs",
+      "concept": "cycle-detection",
+      "difficulty": 2,
+      "title": "Circular migration check",
+      "prompt": "Before a release, 50,000 database migrations are loaded, each listing the migrations it must run after. Reject the release if any chain of these links loops back to itself.",
+      "options": [
+        {
+          "id": "a",
+          "label": "BFS with one visited set",
+          "rationale": "A shared visited set flags a diamond (two paths to one migration) as a loop although none exists."
+        },
+        {
+          "id": "b",
+          "label": "Union-find on the links",
+          "rationale": "Treats links as undirected, so A->B, A->C, B->D, C->D looks like a cycle but is a valid order."
+        },
+        {
+          "id": "c",
+          "label": "Dijkstra from each migration",
+          "rationale": "Shortest paths do not report loops, and running it from each node is needlessly expensive."
+        },
+        {
+          "id": "d",
+          "label": "DFS tracking current path",
+          "rationale": "Mark nodes on the current path; an edge back to one of them closes a cycle. Finished nodes are skipped."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Run DFS with three states per node: unseen, on the current path, done. An edge to a node on the current path is a back edge and proves a cycle; an edge to a done node is harmless. Kahn's algorithm gives the same verdict (leftover nodes mean a cycle). Linear time.",
       "complexity": {
-        "time": "O(n log k)",
-        "space": "O(k)"
+        "time": "O(V + E)",
+        "space": "O(V)"
       },
       "validations": [
         {
           "type": "bigO",
           "measure": "space",
-          "question": "A min-heap of size k scans a stream of n scores. How much extra space does it use?",
+          "question": "DFS cycle check: extra memory beyond the adjacency list (state marks and path stack)?",
           "choices": [
             "O(1)",
-            "O(k)",
-            "O(n)",
-            "O(n^2)"
+            "O(V)",
+            "O(V + E)",
+            "O(V^2)"
           ],
-          "answer": "O(k)"
+          "answer": "O(V)"
+        },
+        {
+          "type": "traceOrder",
+          "question": "Tap the order DFS visits the migrations, starting at A. Out-neighbors are tried in alphabetical order.",
+          "visual": {
+            "kind": "graph",
+            "caption": "Arrow means: runs before",
+            "start": "A",
+            "nodes": [
+              {
+                "id": "A",
+                "label": "A",
+                "x": 60,
+                "y": 70
+              },
+              {
+                "id": "B",
+                "label": "B",
+                "x": 160,
+                "y": 70
+              },
+              {
+                "id": "C",
+                "label": "C",
+                "x": 260,
+                "y": 70
+              },
+              {
+                "id": "D",
+                "label": "D",
+                "x": 260,
+                "y": 170
+              },
+              {
+                "id": "E",
+                "label": "E",
+                "x": 160,
+                "y": 170
+              },
+              {
+                "id": "F",
+                "label": "F",
+                "x": 60,
+                "y": 170
+              }
+            ],
+            "edges": [
+              {
+                "from": "A",
+                "to": "B",
+                "directed": true
+              },
+              {
+                "from": "A",
+                "to": "F",
+                "directed": true
+              },
+              {
+                "from": "B",
+                "to": "C",
+                "directed": true
+              },
+              {
+                "from": "C",
+                "to": "D",
+                "directed": true
+              },
+              {
+                "from": "D",
+                "to": "E",
+                "directed": true
+              },
+              {
+                "from": "E",
+                "to": "B",
+                "directed": true
+              },
+              {
+                "from": "F",
+                "to": "E",
+                "directed": true
+              }
+            ]
+          },
+          "algorithm": "dfs",
+          "tieBreak": "alphabetical",
+          "givenPrefix": 1,
+          "answer": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ]
         }
       ],
       "study": [
         {
-          "sectionId": "17.2"
+          "sectionId": "13.8"
         }
       ],
       "tags": [
-        "ranking",
-        "streaming"
+        "dependencies",
+        "release"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "graphs-008",
+      "domain": "graphs",
+      "concept": "union-find",
+      "difficulty": 2,
+      "title": "Live network connectivity",
+      "prompt": "Links between 10 million hosts come online one at a time. After each new link, the dashboard must answer whether two given hosts are connected, in near-constant time. Links never go offline.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Re-run BFS for each query",
+          "rationale": "Each query costs O(V + E) and the graph keeps growing; far too slow at this scale."
+        },
+        {
+          "id": "b",
+          "label": "Union-find (disjoint sets)",
+          "rationale": "Union merges two sets and find returns a root; both run in near-constant amortized time."
+        },
+        {
+          "id": "c",
+          "label": "Dijkstra for each query",
+          "rationale": "Computes weighted shortest paths when only yes or no is needed, and is still a full search per query."
+        },
+        {
+          "id": "d",
+          "label": "Floyd-Warshall matrix",
+          "rationale": "O(V^3) time and O(V^2) memory is impossible at 10 million hosts, and each new link forces a rebuild."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Union-find keeps a forest of parent pointers: union merges two hosts' sets and find returns a set's root. With path compression and union by rank, each operation is nearly constant amortized time (inverse Ackermann), so a stream of links and queries stays cheap. It supports adding links, not removing them.",
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "space",
+          "question": "Union-find over n hosts: extra memory for the parent and rank arrays?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "14.5"
+        },
+        {
+          "sectionId": "14.1"
+        }
+      ],
+      "tags": [
+        "networking",
+        "connectivity"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "graphs-009",
+      "domain": "graphs",
+      "concept": "bellman-ford",
+      "difficulty": 3,
+      "title": "Rebate loops in routing",
+      "prompt": "Freight legs have a cost, and some legs pay a negative rebate. From one hub, find the cheapest cost to every port, and detect whether a loop of rebates could drive costs down without limit.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Dijkstra with a min-heap",
+          "rationale": "Assumes non-negative weights; a negative edge can lower an already settled distance, so results are wrong."
+        },
+        {
+          "id": "b",
+          "label": "BFS by number of legs",
+          "rationale": "Counts legs, not cost, so it ignores the rebates entirely."
+        },
+        {
+          "id": "c",
+          "label": "Bellman-Ford",
+          "rationale": "Relaxes every edge V-1 times, handles negative weights, and one extra round exposes a negative cycle."
+        },
+        {
+          "id": "d",
+          "label": "Floyd-Warshall",
+          "rationale": "Can flag negative cycles, but computes all pairs in O(V^3); wasteful when you need one source."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Bellman-Ford relaxes every edge V-1 times; after round k, distances are correct for paths of at most k edges. One extra round that still improves a distance proves a negative cycle is reachable. It handles negative weights at O(V E) cost, slower than Dijkstra.",
+      "complexity": {
+        "time": "O(V E)",
+        "space": "O(V)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Bellman-Ford on V ports and E legs, including the extra cycle-check round: time?",
+          "choices": [
+            "O(V + E)",
+            "O((V + E) log V)",
+            "O(V E)",
+            "O(2^V)"
+          ],
+          "answer": "O(V E)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "29.3"
+        }
+      ],
+      "tags": [
+        "negative-weights",
+        "logistics"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "graphs-010",
+      "domain": "graphs",
+      "concept": "bounded-shortest-path",
+      "difficulty": 3,
+      "title": "Cheapest fare, two layovers",
+      "prompt": "A flight search must return the cheapest fare from A to B using at most two layovers (three flights). Fares are positive, and a cheaper route with more flights must not be returned.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Bellman-Ford, 3 rounds",
+          "rationale": "Each round adds one flight; after 3 rounds distances cover routes of up to 3 flights, relaxing from the last round's copy."
+        },
+        {
+          "id": "b",
+          "label": "Dijkstra with a visited set",
+          "rationale": "Settling a city at its cheapest fare can discard a pricier route with fewer flights, the only one that fits."
+        },
+        {
+          "id": "c",
+          "label": "BFS, then take the cheapest",
+          "rationale": "BFS finds the fewest flights, not the lowest fare; the cheapest legal route may use more flights."
+        },
+        {
+          "id": "d",
+          "label": "Floyd-Warshall table",
+          "rationale": "Gives unconstrained all-pairs fares and has no way to cap the number of flights."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Bound the number of edges: run Bellman-Ford for K+1 rounds (K layovers), relaxing each round from a copy of the previous round's distances so a path grows by one flight per round. Cost is O(K E). Dijkstra over (city, flights used) states also works but is heavier to write.",
+      "complexity": {
+        "time": "O(K E)",
+        "space": "O(V)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Bellman-Ford capped at K+1 rounds over E flights (K layovers, K < V): time?",
+          "choices": [
+            "O(E)",
+            "O(K E)",
+            "O(V E)",
+            "O(2^V)"
+          ],
+          "answer": "O(K E)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "29.3"
+        }
+      ],
+      "tags": [
+        "travel",
+        "constraints"
       ]
     },
     {
@@ -817,6 +1338,502 @@
       "tags": [
         "pricing",
         "memoization"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-004",
+      "domain": "dp",
+      "concept": "grid-paths",
+      "difficulty": 1,
+      "title": "Count robot routes",
+      "prompt": "A warehouse robot moves only right or down across an R x C grid of aisles. Some cells are blocked. Count the distinct routes from the entrance to the dock, modulo 1,000,000,007.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Enumerate every route (DFS)",
+          "rationale": "Route counts grow exponentially; listing each one is far too slow even for modest grids."
+        },
+        {
+          "id": "b",
+          "label": "Grid DP: ways = top + left",
+          "rationale": "Each cell's route count is the sum from above and from the left; every cell is computed once."
+        },
+        {
+          "id": "c",
+          "label": "BFS shortest path",
+          "rationale": "Finds the shortest length, which is the same for every route here; it does not count routes."
+        },
+        {
+          "id": "d",
+          "label": "Dijkstra over cell costs",
+          "rationale": "There are no costs to minimize; the task is to count routes, which shortest-path search does not do."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Let ways[r][c] be the number of routes to a cell: zero if blocked, otherwise ways from above plus ways from the left, with the entrance as 1. Fill row by row; each cell is computed once. Keeping only the previous row cuts memory to O(C).",
+      "complexity": {
+        "time": "O(R C)",
+        "space": "O(C)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "For an n x n grid, what is the time to fill the table?",
+          "choices": [
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n^2)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.6"
+        }
+      ],
+      "tags": [
+        "grids",
+        "counting"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-005",
+      "domain": "dp",
+      "concept": "space-optimized-dp",
+      "difficulty": 1,
+      "title": "Constant-memory recurrence",
+      "prompt": "A pricing model defines f(n) = f(n-1) + f(n-2) mod p, with n up to 50 million. Memoized recursion overflows the stack and the memo table eats RAM. Compute f(n) with constant extra memory.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Memoized recursion + map",
+          "rationale": "Still recurses n levels deep and stores n entries: the exact problems you hit."
+        },
+        {
+          "id": "b",
+          "label": "Plain recursion",
+          "rationale": "Recomputes the same subproblems and takes exponential time."
+        },
+        {
+          "id": "c",
+          "label": "Bottom-up, two variables",
+          "rationale": "Each step reads only the previous two values, so two variables replace the whole table."
+        },
+        {
+          "id": "d",
+          "label": "Full table of n + 1 entries",
+          "rationale": "Fixes the stack but still stores 50 million entries when only the last two are ever read."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Each value depends only on the previous two, so iterate upward from the base cases and keep two variables, updating them every step. No recursion and no table: O(n) time and O(1) extra memory. The same idea shrinks any DP that reads a fixed number of earlier states.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "space",
+          "question": "Bottom-up f(n) keeping only the last two values: extra memory?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n^2)"
+          ],
+          "answer": "O(1)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.15"
+        },
+        {
+          "sectionId": "22.2"
+        }
+      ],
+      "tags": [
+        "tabulation",
+        "memory"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-006",
+      "domain": "dp",
+      "concept": "max-non-adjacent-sum",
+      "difficulty": 1,
+      "title": "Ad slots, no back-to-back",
+      "prompt": "An ad planner has 365 days of slot revenue. Policy forbids ads on two consecutive days. Choose the days that maximize total revenue.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Take the largest slot first",
+          "rationale": "Greedy fails: with 4, 5, 4 it takes the 5 and earns 5, while the two 4s earn 8."
+        },
+        {
+          "id": "b",
+          "label": "Alternate days only",
+          "rationale": "Odd or even days can miss the best pair; with 10, 1, 1, 10 it earns 11, not 20."
+        },
+        {
+          "id": "c",
+          "label": "Try every subset of days",
+          "rationale": "2^365 subsets is hopeless; most of the work repeats the same prefixes."
+        },
+        {
+          "id": "d",
+          "label": "DP: max(skip, take)",
+          "rationale": "Either skip day i, or take it and add best[i-2]; each day is O(1)."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Let best[i] be the maximum revenue using days up to i: either skip day i (best[i-1]) or take it (best[i-2] + revenue[i]). Each day costs O(1), and only the last two values are needed. This is the take-or-skip DP for any neighbor constraint.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Take-or-skip DP over n days: time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.5"
+        }
+      ],
+      "tags": [
+        "advertising",
+        "constraints"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-007",
+      "domain": "dp",
+      "concept": "coin-change",
+      "difficulty": 2,
+      "title": "Fewest vouchers",
+      "prompt": "A store issues credit as vouchers worth 1, 3 or 4 points. For any balance up to 10,000 points, issue the fewest vouchers that add up to the balance exactly.",
+      "options": [
+        {
+          "id": "a",
+          "label": "DP over balances",
+          "rationale": "dp[x] = 1 + the minimum dp[x - v] over vouchers v; every sub-balance is solved once."
+        },
+        {
+          "id": "b",
+          "label": "Greedy: largest first",
+          "rationale": "Fails here: 6 points gives 4+1+1 (3 vouchers), but 3+3 needs only 2."
+        },
+        {
+          "id": "c",
+          "label": "Recursion without caching",
+          "rationale": "Branches on every voucher at every step: exponential time, with the same sub-balances repeating."
+        },
+        {
+          "id": "d",
+          "label": "Sort vouchers, two pointers",
+          "rationale": "Two pointers find pairs summing to a target; the number of vouchers is unbounded here."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Let dp[x] be the fewest vouchers for balance x, with dp[0] = 0. Then dp[x] = 1 + min(dp[x - v]) over vouchers v <= x. Fill x upward; each cell reads a few earlier cells. Greedy works only for special systems such as 1, 5, 10, 25.",
+      "complexity": {
+        "time": "O(n k)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Fewest-voucher DP for balance n with a fixed handful of voucher values: time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Vouchers are 1, 3, 4. dp[6] is 1 + the smallest dp[6 - v]. Tap the earlier cell that gives dp[6] its minimum.",
+          "visual": {
+            "kind": "array",
+            "caption": "dp[i]: fewest vouchers for i points",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "0"
+              },
+              {
+                "id": "c1",
+                "label": "1"
+              },
+              {
+                "id": "c2",
+                "label": "2"
+              },
+              {
+                "id": "c3",
+                "label": "3"
+              },
+              {
+                "id": "c4",
+                "label": "4"
+              },
+              {
+                "id": "c5",
+                "label": "5"
+              },
+              {
+                "id": "c6",
+                "label": "6"
+              }
+            ]
+          },
+          "answerTargetId": "c3"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.8"
+        }
+      ],
+      "tags": [
+        "optimization",
+        "change-making"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-008",
+      "domain": "dp",
+      "concept": "edit-distance",
+      "difficulty": 2,
+      "title": "Did-you-mean ranking",
+      "prompt": "Search suggests corrections by ranking dictionary words by the fewest single-character insertions, deletions or replacements needed to turn the typed query into the word. Strings are under 40 characters.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Hamming distance",
+          "rationale": "Compares same-length strings position by position; one inserted letter shifts everything and ruins the score."
+        },
+        {
+          "id": "b",
+          "label": "LCS length alone",
+          "rationale": "Models only insertions and deletions, so a replacement costs 2 instead of 1 and rankings change."
+        },
+        {
+          "id": "c",
+          "label": "Edit-distance DP table",
+          "rationale": "d[i][j] covers the first i and j characters; each cell takes the cheapest of replace, delete or insert."
+        },
+        {
+          "id": "d",
+          "label": "Compare sorted letters",
+          "rationale": "Ignores order, so 'form' and 'from' look identical."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Let d[i][j] be the edits to turn the first i characters of a into the first j of b. If the characters match, copy d[i-1][j-1]; otherwise take 1 + the minimum of replace d[i-1][j-1], delete d[i-1][j] or insert d[i][j-1]. The table is filled once per word pair.",
+      "complexity": {
+        "time": "O(m n)",
+        "space": "O(m n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Two strings of length n: time to fill the edit-distance table?",
+          "choices": [
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n^2)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.6"
+        }
+      ],
+      "tags": [
+        "search",
+        "strings"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-009",
+      "domain": "dp",
+      "concept": "lis",
+      "difficulty": 2,
+      "title": "Gradual latency climb",
+      "prompt": "From 200,000 latency samples in time order, find the longest chain of samples that strictly rise, not necessarily adjacent. A long chain signals slow degradation. The job must finish in seconds.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Sliding window of rises",
+          "rationale": "Finds only contiguous rises; a chain may skip over noisy samples."
+        },
+        {
+          "id": "b",
+          "label": "O(n^2) LIS table",
+          "rationale": "Correct but O(n^2): about 4 x 10^10 steps for 200,000 samples."
+        },
+        {
+          "id": "c",
+          "label": "Sort samples, count distinct",
+          "rationale": "Sorting discards time order, which is exactly what defines a rising chain."
+        },
+        {
+          "id": "d",
+          "label": "Tails array + binary search",
+          "rationale": "tails[k] is the smallest tail of a chain of length k+1; binary search per sample gives O(n log n)."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Keep tails, where tails[k] is the smallest possible last value of a rising chain of length k+1. For each sample, binary-search its slot: replace the first value >= it (strict rise), or append if none. The final size of tails is the chain length: O(n log n) time. Recovering the chain needs extra bookkeeping.",
+      "complexity": {
+        "time": "O(n log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Tails-array LIS over n samples: time?",
+          "choices": [
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n log n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.10"
+        }
+      ],
+      "tags": [
+        "monitoring",
+        "subsequence"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-010",
+      "domain": "dp",
+      "concept": "state-machine-dp",
+      "difficulty": 3,
+      "title": "Trading with a cooldown",
+      "prompt": "A bot holds at most one share. After a sale it must sit out one full day before buying again. Given n daily prices, find the maximum profit over the whole period.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Sum every daily price rise",
+          "rationale": "Ignores the cooldown: it sells on day 3 and buys on day 4, which the rules forbid."
+        },
+        {
+          "id": "b",
+          "label": "Hold / sold / rest state DP",
+          "rationale": "Three states per day carry exactly the information the cooldown rule needs."
+        },
+        {
+          "id": "c",
+          "label": "Best single buy then sell",
+          "rationale": "Allows one trade only; several trades with a cooldown can earn more."
+        },
+        {
+          "id": "d",
+          "label": "Sort, buy low, sell high",
+          "rationale": "Sorting destroys time order; you cannot buy a price that appears after you sell."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Track three states per day: holding a share, just sold (cooldown tomorrow), or resting with none. From the previous day: hold = max(hold, rest - price), sold = hold + price, rest = max(rest, sold). The answer is max(sold, rest) on the last day. One pass, constant memory.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Three-state cooldown DP over n days: time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Prices are 1, 2, 3, 0, 2 with the cooldown rule. In the best plan (profit 3), tap the day of its first sale.",
+          "visual": {
+            "kind": "array",
+            "caption": "Daily prices, day 1 to day 5",
+            "cells": [
+              {
+                "id": "d1",
+                "label": "1"
+              },
+              {
+                "id": "d2",
+                "label": "2"
+              },
+              {
+                "id": "d3",
+                "label": "3"
+              },
+              {
+                "id": "d4",
+                "label": "0"
+              },
+              {
+                "id": "d5",
+                "label": "2"
+              }
+            ]
+          },
+          "answerTargetId": "d2"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.12"
+        }
+      ],
+      "tags": [
+        "trading",
+        "state-machine"
       ]
     },
     {
@@ -1082,6 +2099,943 @@
       ]
     },
     {
+      "id": "trees-004",
+      "version": 1,
+      "domain": "trees",
+      "concept": "level-order-traversal",
+      "difficulty": 1,
+      "title": "Org chart rollout",
+      "prompt": "A company rolls out a policy through its org chart: the CEO first, then every direct report, then everyone one step further down. Each layer must be finished before the next one starts. Pick the traversal that gives this order.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Preorder (DFS)",
+          "rationale": "Follows one branch down to its leaf before touching the next, so a distant report is notified before a peer."
+        },
+        {
+          "id": "b",
+          "label": "Level-order (BFS)",
+          "rationale": "A queue releases every person at one depth before anyone deeper, which is exactly the rollout order."
+        },
+        {
+          "id": "c",
+          "label": "Postorder (DFS)",
+          "rationale": "Visits reports before their manager, the reverse of a top-down rollout."
+        },
+        {
+          "id": "d",
+          "label": "In-order traversal",
+          "rationale": "Defined for binary trees and visits a node between its children, not layer by layer."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Level-order traversal (BFS) keeps a queue: dequeue a person, enqueue their reports. Everyone at depth d leaves the queue before anyone at depth d + 1, so the rollout runs layer by layer. Each person is visited once, and the queue holds at most one wide layer.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "traceOrder",
+          "question": "Tap the people in the order level-order (BFS) reaches them from the CEO. Direct reports are queued left to right.",
+          "visual": {
+            "kind": "tree",
+            "caption": "Org chart · start CEO",
+            "start": "CEO",
+            "nodes": [
+              {
+                "id": "CEO",
+                "label": "CEO",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "CTO",
+                "label": "CTO",
+                "x": 90,
+                "y": 94
+              },
+              {
+                "id": "CFO",
+                "label": "CFO",
+                "x": 230,
+                "y": 94
+              },
+              {
+                "id": "Dev",
+                "label": "Dev",
+                "x": 50,
+                "y": 152
+              },
+              {
+                "id": "QA",
+                "label": "QA",
+                "x": 130,
+                "y": 152
+              },
+              {
+                "id": "Fin",
+                "label": "Fin",
+                "x": 230,
+                "y": 152
+              },
+              {
+                "id": "Web",
+                "label": "Web",
+                "x": 50,
+                "y": 210
+              }
+            ],
+            "edges": [
+              {
+                "from": "CEO",
+                "to": "CTO"
+              },
+              {
+                "from": "CEO",
+                "to": "CFO"
+              },
+              {
+                "from": "CTO",
+                "to": "Dev"
+              },
+              {
+                "from": "CTO",
+                "to": "QA"
+              },
+              {
+                "from": "CFO",
+                "to": "Fin"
+              },
+              {
+                "from": "Dev",
+                "to": "Web"
+              }
+            ]
+          },
+          "algorithm": "bfs",
+          "tieBreak": "authored",
+          "givenPrefix": 1,
+          "answer": [
+            "CEO",
+            "CTO",
+            "CFO",
+            "Dev",
+            "QA",
+            "Fin",
+            "Web"
+          ]
+        },
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Level-order traversal of an org chart with n people. What is the time to visit everyone?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "12.2"
+        },
+        {
+          "sectionId": "2.5"
+        }
+      ],
+      "tags": [
+        "org-chart",
+        "bfs",
+        "levels"
+      ]
+    },
+    {
+      "id": "trees-005",
+      "version": 1,
+      "domain": "trees",
+      "concept": "postorder-traversal",
+      "difficulty": 1,
+      "title": "Folder size report",
+      "prompt": "A disk-usage tool reports each folder's total size: its own files plus the totals of all its subfolders. Pick the traversal that has every subfolder's total ready before its parent needs it.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Preorder traversal",
+          "rationale": "Reaches a folder before its subfolders, so the child totals it needs do not exist yet."
+        },
+        {
+          "id": "b",
+          "label": "Level-order (BFS)",
+          "rationale": "Goes top-down, layer by layer, so parents come first. Totals would need a second bottom-up pass."
+        },
+        {
+          "id": "c",
+          "label": "In-order traversal",
+          "rationale": "Only defined for binary trees, and it visits a folder between its children, not after both."
+        },
+        {
+          "id": "d",
+          "label": "Postorder traversal",
+          "rationale": "Finishes both subtrees before the folder itself, so each total is built from totals that already exist."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "A folder's total depends on its children's totals, so the children must be finished first. Postorder visits the left subtree, the right subtree, then the node, so each result is computed from results that already exist. One pass: O(n) time, O(h) stack for tree height h. Deleting a directory tree follows the same order.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(h)"
+      },
+      "validations": [
+        {
+          "type": "traceOrder",
+          "question": "Tap the folders in postorder: left subtree, right subtree, then the folder itself.",
+          "visual": {
+            "kind": "tree",
+            "caption": "Folder tree · start usr",
+            "start": "usr",
+            "nodes": [
+              {
+                "id": "usr",
+                "label": "usr",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "bin",
+                "label": "bin",
+                "x": 90,
+                "y": 110
+              },
+              {
+                "id": "lib",
+                "label": "lib",
+                "x": 230,
+                "y": 110
+              },
+              {
+                "id": "ls",
+                "label": "ls",
+                "x": 50,
+                "y": 184
+              },
+              {
+                "id": "cp",
+                "label": "cp",
+                "x": 130,
+                "y": 184
+              },
+              {
+                "id": "py",
+                "label": "py",
+                "x": 190,
+                "y": 184
+              },
+              {
+                "id": "js",
+                "label": "js",
+                "x": 270,
+                "y": 184
+              }
+            ],
+            "edges": [
+              {
+                "from": "usr",
+                "to": "bin"
+              },
+              {
+                "from": "usr",
+                "to": "lib"
+              },
+              {
+                "from": "bin",
+                "to": "ls"
+              },
+              {
+                "from": "bin",
+                "to": "cp"
+              },
+              {
+                "from": "lib",
+                "to": "py"
+              },
+              {
+                "from": "lib",
+                "to": "js"
+              }
+            ]
+          },
+          "algorithm": "postorder",
+          "tieBreak": "authored",
+          "givenPrefix": 1,
+          "answer": [
+            "ls",
+            "cp",
+            "bin",
+            "py",
+            "js",
+            "lib",
+            "usr"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "11.4"
+        }
+      ],
+      "tags": [
+        "filesystem",
+        "bottom-up"
+      ]
+    },
+    {
+      "id": "trees-006",
+      "version": 1,
+      "domain": "trees",
+      "concept": "preorder-traversal",
+      "difficulty": 1,
+      "title": "Category tree export",
+      "prompt": "A catalog exports its category tree as one flat list. The importer reads it once, top to bottom, and must see every category before its subcategories, with each whole subtree contiguous so it can be copied as a block.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Preorder traversal",
+          "rationale": "Emits a node, then its whole left subtree, then its whole right one: parents first and every subtree contiguous."
+        },
+        {
+          "id": "b",
+          "label": "Postorder traversal",
+          "rationale": "Subtrees stay contiguous, but each parent comes after its children, so the importer sees children first."
+        },
+        {
+          "id": "c",
+          "label": "Level-order (BFS)",
+          "rationale": "Parents come first, but a subtree is scattered across levels and cannot be copied as one block."
+        },
+        {
+          "id": "d",
+          "label": "In-order traversal",
+          "rationale": "Places a node between its subtrees, so a parent can follow some of its own descendants."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Preorder writes a node, then its entire left subtree, then its entire right subtree. Parents always precede descendants and each subtree is one contiguous run, so the importer can read once and slice by subtree. Add null markers for missing children to rebuild the exact shape. O(n) time, O(h) stack.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(h)"
+      },
+      "validations": [
+        {
+          "type": "traceOrder",
+          "question": "Tap the categories in preorder: the category, then its left subtree, then its right subtree.",
+          "visual": {
+            "kind": "tree",
+            "caption": "Category tree · start All",
+            "start": "All",
+            "nodes": [
+              {
+                "id": "All",
+                "label": "All",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "Men",
+                "label": "Men",
+                "x": 90,
+                "y": 98
+              },
+              {
+                "id": "Wom",
+                "label": "Wom",
+                "x": 240,
+                "y": 98
+              },
+              {
+                "id": "Sho",
+                "label": "Sho",
+                "x": 50,
+                "y": 160
+              },
+              {
+                "id": "Tee",
+                "label": "Tee",
+                "x": 130,
+                "y": 160
+              },
+              {
+                "id": "Bag",
+                "label": "Bag",
+                "x": 270,
+                "y": 160
+              },
+              {
+                "id": "Sox",
+                "label": "Sox",
+                "x": 150,
+                "y": 214
+              }
+            ],
+            "edges": [
+              {
+                "from": "All",
+                "to": "Men"
+              },
+              {
+                "from": "All",
+                "to": "Wom"
+              },
+              {
+                "from": "Men",
+                "to": "Sho"
+              },
+              {
+                "from": "Men",
+                "to": "Tee"
+              },
+              {
+                "from": "Tee",
+                "to": "Sox"
+              },
+              {
+                "from": "Wom",
+                "to": "Bag"
+              }
+            ]
+          },
+          "algorithm": "preorder",
+          "tieBreak": "authored",
+          "givenPrefix": 1,
+          "answer": [
+            "All",
+            "Men",
+            "Sho",
+            "Tee",
+            "Sox",
+            "Wom",
+            "Bag"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "11.2"
+        }
+      ],
+      "tags": [
+        "serialization",
+        "export"
+      ]
+    },
+    {
+      "id": "trees-007",
+      "version": 1,
+      "domain": "trees",
+      "concept": "bst-minimum",
+      "difficulty": 1,
+      "title": "Cheapest listing lookup",
+      "prompt": "A marketplace keeps listings in a balanced BST keyed by price. The homepage shows the cheapest listing on every request, thousands of times a second. Fetch it without scanning the whole catalog.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Read the root node",
+          "rationale": "The root is a middle key, not the smallest. Smaller keys sit in its left subtree."
+        },
+        {
+          "id": "b",
+          "label": "Full in-order, take first",
+          "rationale": "Correct, but it visits all n nodes when the minimum is a short walk down the left edge."
+        },
+        {
+          "id": "c",
+          "label": "Walk left to the last node",
+          "rationale": "Every key in a left subtree is smaller, so the leftmost node is the minimum, reached in O(log n) steps."
+        },
+        {
+          "id": "d",
+          "label": "Walk right to the last node",
+          "rationale": "That reaches the largest key, the most expensive listing."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "In a BST every key in a left subtree is smaller than its node, so the minimum is the leftmost node. Follow left children until none remains: one step per level, O(h), which is O(log n) while the tree stays balanced. The maximum mirrors this to the right.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "You are looking for the minimum key. Starting at the root, which node do you move to first?",
+          "visual": {
+            "kind": "tree",
+            "caption": "BST keyed by price · start 50",
+            "start": "50",
+            "nodes": [
+              {
+                "id": "50",
+                "label": "50",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "30",
+                "label": "30",
+                "x": 90,
+                "y": 98
+              },
+              {
+                "id": "70",
+                "label": "70",
+                "x": 230,
+                "y": 98
+              },
+              {
+                "id": "20",
+                "label": "20",
+                "x": 50,
+                "y": 160
+              },
+              {
+                "id": "40",
+                "label": "40",
+                "x": 130,
+                "y": 160
+              },
+              {
+                "id": "60",
+                "label": "60",
+                "x": 200,
+                "y": 160
+              },
+              {
+                "id": "80",
+                "label": "80",
+                "x": 270,
+                "y": 160
+              }
+            ],
+            "edges": [
+              {
+                "from": "50",
+                "to": "30"
+              },
+              {
+                "from": "50",
+                "to": "70"
+              },
+              {
+                "from": "30",
+                "to": "20"
+              },
+              {
+                "from": "30",
+                "to": "40"
+              },
+              {
+                "from": "70",
+                "to": "60"
+              },
+              {
+                "from": "70",
+                "to": "80"
+              }
+            ]
+          },
+          "answerTargetId": "30"
+        },
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Finding the minimum key in a balanced BST of n nodes. What is the time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)"
+          ],
+          "answer": "O(log n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "11.7"
+        },
+        {
+          "sectionId": "2.5"
+        }
+      ],
+      "tags": [
+        "bst",
+        "ordered-set",
+        "marketplace"
+      ]
+    },
+    {
+      "id": "trees-008",
+      "version": 1,
+      "domain": "trees",
+      "concept": "bfs-shallowest-match",
+      "difficulty": 2,
+      "title": "Nearest flagged category",
+      "prompt": "A category tree is wide and very deep. Moderation needs the shallowest category carrying an age-restricted flag, and the search should stop as soon as that answer is certain instead of reading every node.",
+      "options": [
+        {
+          "id": "a",
+          "label": "BFS, stop at first flag",
+          "rationale": "Nodes come out in depth order, so the first flagged one is the shallowest and nothing deeper is read."
+        },
+        {
+          "id": "b",
+          "label": "DFS, stop at the first flag",
+          "rationale": "A deep left branch can hold a flag while a shallower one sits on the right, so the first flag found may not be the shallowest."
+        },
+        {
+          "id": "c",
+          "label": "Full DFS, keep the minimum",
+          "rationale": "Correct, but it reads every node, including the deep branches the search was meant to skip."
+        },
+        {
+          "id": "d",
+          "label": "Postorder traversal",
+          "rationale": "Visits children before parents, so the deepest flags surface first: the opposite of what is wanted."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "BFS visits nodes in order of depth, so the first flagged node it dequeues is at the minimum depth and the search can stop there. DFS must finish a deep branch before it can rule out a shallower flag elsewhere. The worst case is still O(n) when no node matches, and the queue may hold a whole level.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "BFS looks for the shallowest flagged node among n categories. What is the worst-case time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "12.4"
+        },
+        {
+          "sectionId": "12.7"
+        }
+      ],
+      "tags": [
+        "bfs",
+        "early-exit",
+        "moderation"
+      ]
+    },
+    {
+      "id": "trees-009",
+      "version": 1,
+      "domain": "trees",
+      "concept": "lowest-common-ancestor",
+      "difficulty": 3,
+      "title": "Closest shared role",
+      "prompt": "A permissions service stores roles as a plain binary tree: no key ordering, no parent pointers, 1M nodes. Given two role IDs, find the closest role above both, using no more extra memory than the recursion depth.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Compare keys, BST-style",
+          "rationale": "Needs ordered keys. In an unordered tree a comparison says nothing about which subtree holds a role."
+        },
+        {
+          "id": "b",
+          "label": "DFS, merge at the split",
+          "rationale": "Each call reports what its subtree found. The first node with a hit on both sides is the LCA. One pass, O(h) stack."
+        },
+        {
+          "id": "c",
+          "label": "Walk up with a parent map",
+          "rationale": "The tree has no parent pointers, and building a parent map costs O(n) extra memory."
+        },
+        {
+          "id": "d",
+          "label": "Level-order, pick shallower",
+          "rationale": "The shallower node is not necessarily an ancestor of the other, so levels alone do not find the split."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Recurse from the root: return a node as soon as it matches either role, otherwise combine the results of the two subtrees. The first node whose left and right calls both return a hit is the split point, the LCA. If one role is an ancestor of the other, it is the LCA. O(n) time, O(h) stack.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(h)"
+      },
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "Tap the lowest common ancestor of D and G. A node counts as its own descendant.",
+          "visual": {
+            "kind": "tree",
+            "caption": "Role tree · start R",
+            "start": "R",
+            "nodes": [
+              {
+                "id": "R",
+                "label": "R",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "A",
+                "label": "A",
+                "x": 90,
+                "y": 98
+              },
+              {
+                "id": "B",
+                "label": "B",
+                "x": 230,
+                "y": 98
+              },
+              {
+                "id": "C",
+                "label": "C",
+                "x": 50,
+                "y": 160
+              },
+              {
+                "id": "D",
+                "label": "D",
+                "x": 130,
+                "y": 160
+              },
+              {
+                "id": "E",
+                "label": "E",
+                "x": 200,
+                "y": 160
+              },
+              {
+                "id": "F",
+                "label": "F",
+                "x": 270,
+                "y": 160
+              },
+              {
+                "id": "G",
+                "label": "G",
+                "x": 150,
+                "y": 214
+              }
+            ],
+            "edges": [
+              {
+                "from": "R",
+                "to": "A"
+              },
+              {
+                "from": "R",
+                "to": "B"
+              },
+              {
+                "from": "A",
+                "to": "C"
+              },
+              {
+                "from": "A",
+                "to": "D"
+              },
+              {
+                "from": "B",
+                "to": "E"
+              },
+              {
+                "from": "B",
+                "to": "F"
+              },
+              {
+                "from": "D",
+                "to": "G"
+              }
+            ]
+          },
+          "answerTargetId": "D"
+        },
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Recursive LCA search in a plain binary tree of n nodes. What is the worst-case time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "11.6"
+        }
+      ],
+      "tags": [
+        "lca",
+        "permissions",
+        "recursion"
+      ]
+    },
+    {
+      "id": "trees-010",
+      "version": 1,
+      "domain": "trees",
+      "concept": "ordered-interval-index",
+      "difficulty": 3,
+      "title": "Calendar conflict check",
+      "prompt": "A booking API holds up to 5M non-overlapping reservations. Bookings are added and cancelled all day, and each new request must be accepted or rejected in real time. Reject any slot that overlaps an existing one.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Sorted array, binary search",
+          "rationale": "Finding the neighbors is O(log n), but every booking or cancellation shifts O(n) elements."
+        },
+        {
+          "id": "b",
+          "label": "Scan every booking",
+          "rationale": "O(n) per request across 5M reservations, and it ignores that order narrows the check to two neighbors."
+        },
+        {
+          "id": "c",
+          "label": "Balanced BST on start time",
+          "rationale": "Insert and delete in O(log n). Only the predecessor and successor can overlap a new slot, so check just those two."
+        },
+        {
+          "id": "d",
+          "label": "Hash map keyed by start",
+          "rationale": "Finds an exact start quickly, but overlap depends on neighbors, and a hash map has no order to find them."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Keep reservations in a balanced BST (a sorted set) keyed by start time. They never overlap, so a new slot can only collide with the booking just before it or just after it: find those two neighbors and compare their ends and starts. Search, insert and delete are all O(log n), which a sorted array cannot match on updates.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "A new booking starts at 35. Tap its predecessor: the latest existing start before 35.",
+          "visual": {
+            "kind": "tree",
+            "caption": "BST keyed by start time · start 40",
+            "start": "40",
+            "nodes": [
+              {
+                "id": "40",
+                "label": "40",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "20",
+                "label": "20",
+                "x": 90,
+                "y": 98
+              },
+              {
+                "id": "60",
+                "label": "60",
+                "x": 230,
+                "y": 98
+              },
+              {
+                "id": "10",
+                "label": "10",
+                "x": 50,
+                "y": 160
+              },
+              {
+                "id": "30",
+                "label": "30",
+                "x": 130,
+                "y": 160
+              },
+              {
+                "id": "50",
+                "label": "50",
+                "x": 200,
+                "y": 160
+              },
+              {
+                "id": "70",
+                "label": "70",
+                "x": 270,
+                "y": 160
+              }
+            ],
+            "edges": [
+              {
+                "from": "40",
+                "to": "20"
+              },
+              {
+                "from": "40",
+                "to": "60"
+              },
+              {
+                "from": "20",
+                "to": "10"
+              },
+              {
+                "from": "20",
+                "to": "30"
+              },
+              {
+                "from": "60",
+                "to": "50"
+              },
+              {
+                "from": "60",
+                "to": "70"
+              }
+            ]
+          },
+          "answerTargetId": "30"
+        },
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Checking one new slot against a balanced BST of n reservations: find two neighbors, compare. What is the time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)"
+          ],
+          "answer": "O(log n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.5"
+        },
+        {
+          "sectionId": "10.1"
+        }
+      ],
+      "tags": [
+        "calendar",
+        "intervals",
+        "ordered-set"
+      ]
+    },
+    {
       "id": "sorting-001",
       "version": 1,
       "domain": "sorting",
@@ -1120,7 +3074,7 @@
       "validations": [
         {
           "type": "traceOrder",
-          "question": "Binary search for 22 in the sorted array. Probe mid = floor((lo + hi) / 2). Tap the probes in order.",
+          "question": "Binary search for 22 in the sorted array, with lo = 0 and hi = the last index. Probe mid = floor((lo + hi) / 2). Tap the probes in order.",
           "visual": {
             "kind": "array",
             "caption": "Sorted by created_at (minutes)",
@@ -1322,6 +3276,1310 @@
       "tags": [
         "percentiles",
         "metrics"
+      ]
+    },
+    {
+      "id": "sorting-004",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "counting-sort",
+      "difficulty": 1,
+      "title": "Sort reviews by stars",
+      "prompt": "A store ranks 50M product reviews by star rating, an integer from 1 to 5, for a nightly report. The values come from a tiny fixed range, and the job should run in linear time.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Counting sort",
+          "rationale": "Tallies each of the 5 values, then writes them out in order: O(n + k) with k = 5 and no comparisons."
+        },
+        {
+          "id": "b",
+          "label": "Quicksort",
+          "rationale": "Averages O(n log n) and ignores that only 5 distinct values exist."
+        },
+        {
+          "id": "c",
+          "label": "Merge sort",
+          "rationale": "Always O(n log n) and needs O(n) extra space, more work than a 5-value range requires."
+        },
+        {
+          "id": "d",
+          "label": "Insertion sort",
+          "rationale": "O(n^2) on average, hopeless at 50M items."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "When keys are integers in a known range of size k, counting sort tallies each value and rebuilds the output from the counts: O(n + k) time and O(k) counters. With k = 5 that is effectively linear, beating the O(n log n) bound that applies to comparison sorts. It stops paying off when k is far larger than n.",
+      "complexity": {
+        "time": "O(n + k)",
+        "space": "O(k)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Counting sort on n reviews that have 5 possible ratings. What is the time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "9.3"
+        },
+        {
+          "sectionId": "9.4"
+        }
+      ],
+      "tags": [
+        "ratings",
+        "non-comparison"
+      ]
+    },
+    {
+      "id": "sorting-005",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "insertion-sort",
+      "difficulty": 1,
+      "title": "Live leaderboard re-sort",
+      "prompt": "A game screen re-sorts a 200-row leaderboard after every score update. The list was already sorted, and each update moves only a few rows. The sort should cost almost nothing when little has changed.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Quicksort",
+          "rationale": "Averages O(n log n) however sorted the input is, and a naive pivot degrades to O(n^2) on sorted data."
+        },
+        {
+          "id": "b",
+          "label": "Heapsort",
+          "rationale": "Always O(n log n): it rebuilds a heap and never exploits the existing order."
+        },
+        {
+          "id": "c",
+          "label": "Insertion sort",
+          "rationale": "Cost is about n plus the number of out-of-order pairs, so a nearly sorted list takes close to linear time."
+        },
+        {
+          "id": "d",
+          "label": "Selection sort",
+          "rationale": "Always O(n^2): it scans the unsorted part for the minimum even when everything is in place."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Insertion sort shifts each element left only as far as it is out of place, so its cost is O(n + d) for d out-of-order pairs. A nearly sorted list finishes in close to linear time, and the sort is stable and in-place. On random input it is O(n^2), so use it only when the disorder is small.",
+      "complexity": {
+        "time": "O(n + d)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Insertion sort on a list of n rows that is already sorted. What is the time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "9.4"
+        },
+        {
+          "sectionId": "9.2"
+        }
+      ],
+      "tags": [
+        "leaderboard",
+        "nearly-sorted"
+      ]
+    },
+    {
+      "id": "sorting-006",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "merge-sorted-lists",
+      "difficulty": 1,
+      "title": "Merge two sorted feeds",
+      "prompt": "Two services each return their latest 10,000 events, already sorted by timestamp. Produce one sorted timeline for the dashboard, and do not throw away the order the inputs already have.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Concatenate, then full sort",
+          "rationale": "Correct output, but O(n log n) work that ignores both lists being sorted already."
+        },
+        {
+          "id": "b",
+          "label": "Two-pointer merge",
+          "rationale": "Compare the two heads, emit the smaller, advance that list: one pass, O(n + m)."
+        },
+        {
+          "id": "c",
+          "label": "Insert each into a BST",
+          "rationale": "Rebuilds the order from scratch at O(log n) per event, plus an in-order walk."
+        },
+        {
+          "id": "d",
+          "label": "Hash set, then sort keys",
+          "rationale": "Hashing discards order and duplicates, and the final sort costs O(n log n) anyway."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Both inputs are already sorted, so keep one pointer per list, emit the smaller head, and advance that pointer. Every event is touched once: O(n + m) time and O(n + m) for the output. This is the merge step inside merge sort. On equal timestamps, take the first list's event first to stay stable.",
+      "complexity": {
+        "time": "O(n + m)",
+        "space": "O(n + m)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Two-pointer merge of two sorted lists of n events each. What is the time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "9.2"
+        }
+      ],
+      "tags": [
+        "merge",
+        "events",
+        "timeline"
+      ]
+    },
+    {
+      "id": "sorting-007",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "stable-sort",
+      "difficulty": 2,
+      "title": "Multi-column table sort",
+      "prompt": "A table is sorted by name, then the user clicks the Team column. Rows on the same team must stay in name order, so the second sort cannot reshuffle ties. Pick the sort for the click handler.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Quicksort",
+          "rationale": "Swaps distant elements, so equal keys can change relative order. It is not stable."
+        },
+        {
+          "id": "b",
+          "label": "Heapsort",
+          "rationale": "In-place and O(n log n), but not stable: equal keys can swap places."
+        },
+        {
+          "id": "c",
+          "label": "Selection sort",
+          "rationale": "Its long-distance swaps are not stable, and it costs O(n^2) on top."
+        },
+        {
+          "id": "d",
+          "label": "Merge sort",
+          "rationale": "Equal keys keep their input order when the merge takes the left item on ties, so name order survives inside each team."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "A stable sort keeps equal keys in their original relative order, so sorting by team after name leaves each team's rows in name order. Merge sort is stable when ties take the left item, at O(n log n) time and O(n) extra space. Quicksort and heapsort are not stable; TimSort-based library sorts are.",
+      "complexity": {
+        "time": "O(n log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "space",
+          "question": "Merge sort on n rows, using a temporary array for merging. How much extra space does it need?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Rows are in name order. Stable sort by team (A before B). Which cell is written to the output first?",
+          "visual": {
+            "kind": "array",
+            "caption": "Cells show team-name, in name order",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "B-a"
+              },
+              {
+                "id": "c1",
+                "label": "A-b"
+              },
+              {
+                "id": "c2",
+                "label": "B-c"
+              },
+              {
+                "id": "c3",
+                "label": "A-d"
+              },
+              {
+                "id": "c4",
+                "label": "B-e"
+              },
+              {
+                "id": "c5",
+                "label": "A-f"
+              }
+            ]
+          },
+          "answerTargetId": "c1"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "9.2"
+        },
+        {
+          "sectionId": "9.4"
+        }
+      ],
+      "tags": [
+        "stability",
+        "ui-tables"
+      ]
+    },
+    {
+      "id": "sorting-008",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "merge-intervals",
+      "difficulty": 2,
+      "title": "Free/busy calendar merge",
+      "prompt": "A scheduling tool pulls busy blocks from several calendars as unsorted start-end pairs. Overlapping blocks must collapse into single busy periods so the free slots between them can be shown.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Sort by start, then sweep",
+          "rationale": "After sorting by start, only the last merged block can overlap the next one, so one pass merges everything."
+        },
+        {
+          "id": "b",
+          "label": "Compare every pair of blocks",
+          "rationale": "Finds every overlap but costs O(n^2) comparisons, and chains of overlaps are awkward to merge."
+        },
+        {
+          "id": "c",
+          "label": "Sort by duration",
+          "rationale": "Length says nothing about position, so neighbors in that order need not touch."
+        },
+        {
+          "id": "d",
+          "label": "Hash map keyed by start",
+          "rationale": "An exact start lookup does not reveal overlaps, which depend on ranges, and a hash map has no order."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Sort the blocks by start time, then sweep once: if the next block starts at or before the current block's end, extend the end to the larger of the two ends, otherwise begin a new period. The sort dominates: O(n log n) time, O(n) for the output. Free slots are the gaps between merged periods.",
+      "complexity": {
+        "time": "O(n log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Merging n unsorted intervals: sort by start, then one sweep. What is the time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n log n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Blocks arrive unsorted. After sorting by start time, which block does the sweep process first?",
+          "visual": {
+            "kind": "array",
+            "caption": "Busy blocks (hours), arrival order",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "5-8"
+              },
+              {
+                "id": "c1",
+                "label": "1-3"
+              },
+              {
+                "id": "c2",
+                "label": "8-10"
+              },
+              {
+                "id": "c3",
+                "label": "2-6"
+              }
+            ]
+          },
+          "answerTargetId": "c1"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "10.2"
+        },
+        {
+          "sectionId": "10.1"
+        }
+      ],
+      "tags": [
+        "calendar",
+        "intervals",
+        "scheduling"
+      ]
+    },
+    {
+      "id": "sorting-009",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "binary-search-bounds",
+      "difficulty": 2,
+      "title": "Events in a time window",
+      "prompt": "A log store keeps 100M events sorted by timestamp, and many events share a timestamp. An API must count events between a start and an end time without reading the rows in between.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Scan the whole window",
+          "rationale": "Reads every row inside the window, so cost tracks window size instead of staying logarithmic."
+        },
+        {
+          "id": "b",
+          "label": "Binary search: any match",
+          "rationale": "Plain binary search stops at some equal timestamp, not the first or last, so duplicates break the count."
+        },
+        {
+          "id": "c",
+          "label": "Binary search both bounds",
+          "rationale": "Find the first index at or after start and the first after end, each in O(log n). The count is their difference."
+        },
+        {
+          "id": "d",
+          "label": "Hash map of timestamp counts",
+          "rationale": "Counts exact timestamps only. A range would mean summing every key in between."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "The log is sorted, so run binary search twice: the lower bound (first index with timestamp >= start) and the upper bound (first index with timestamp > end). The window holds upper - lower rows. Each search is O(log n) and the window is never read. Bound variants keep searching after a match so duplicates cannot hide the edge.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Counting events in a time window of a sorted log with two bound searches over n events. What is the time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)"
+          ],
+          "answer": "O(log n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Find the first 5 with lo = 0 and hi = 7 (the last index). Use mid = floor((lo + hi) / 2). Which cell does the search probe first?",
+          "visual": {
+            "kind": "array",
+            "caption": "Sorted timestamps (minutes)",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "1"
+              },
+              {
+                "id": "c1",
+                "label": "3"
+              },
+              {
+                "id": "c2",
+                "label": "5"
+              },
+              {
+                "id": "c3",
+                "label": "5"
+              },
+              {
+                "id": "c4",
+                "label": "5"
+              },
+              {
+                "id": "c5",
+                "label": "5"
+              },
+              {
+                "id": "c6",
+                "label": "8"
+              },
+              {
+                "id": "c7",
+                "label": "9"
+              }
+            ]
+          },
+          "answerTargetId": "c3"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "8.3"
+        }
+      ],
+      "tags": [
+        "lower-bound",
+        "range-query",
+        "logs"
+      ]
+    },
+    {
+      "id": "sorting-010",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "binary-search-on-answer",
+      "difficulty": 3,
+      "title": "Smallest shift length",
+      "prompt": "A render farm must run 50,000 jobs in their given order, split into at most 8 consecutive shifts. Each job has a known runtime and cannot be split. Find the smallest shift length that still fits every job.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Try every length up to total",
+          "rationale": "Correct, but it tests up to the sum of all runtimes as candidates, each costing O(n)."
+        },
+        {
+          "id": "b",
+          "label": "Binary search on the length",
+          "rationale": "If length L fits, any longer length fits too. Binary search L and test each guess with an O(n) greedy pass."
+        },
+        {
+          "id": "c",
+          "label": "Total runtime divided by 8",
+          "rationale": "The average is only a lower bound. Jobs are ordered and indivisible, so the true minimum can be higher."
+        },
+        {
+          "id": "d",
+          "label": "Binary search the job list",
+          "rationale": "Runtimes are unsorted and the target is a length, not an element, so there is no sorted array to halve."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "The answer is a number in a known range, from the longest single job up to the sum of all jobs. A greedy pass packs jobs in order and opens a new shift when the next job would overflow; that tells in O(n) whether a length fits, and feasibility only improves as the length grows. So binary search the answer: O(n log W) for range size W.",
+      "complexity": {
+        "time": "O(n log W)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Binary search over shift lengths up to total runtime W, with an O(n) feasibility check per guess. What is the time?",
+          "choices": [
+            "O(log W)",
+            "O(n)",
+            "O(n log W)",
+            "O(n W)"
+          ],
+          "answer": "O(n log W)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "8.4"
+        }
+      ],
+      "tags": [
+        "parametric-search",
+        "capacity-planning"
+      ]
+    },
+    {
+      "id": "hashing-001",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "consistent-hashing",
+      "difficulty": 2,
+      "title": "Cache cluster resizing",
+      "prompt": "Your CDN shards 40M cache keys across 12 nodes. Nodes join and leave during traffic spikes. Map keys to nodes so that the fewest keys move when the pool changes.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Modulo hashing (key % n)",
+          "rationale": "Changing n remaps almost every key, so the cache goes cold after a resize."
+        },
+        {
+          "id": "b",
+          "label": "Consistent hashing",
+          "rationale": "Adding or removing a node remaps only about 1/n of the keys, so caches stay warm."
+        },
+        {
+          "id": "c",
+          "label": "Sorted array + binary search",
+          "rationale": "Finds keys quickly but does not solve remapping on its own."
+        },
+        {
+          "id": "d",
+          "label": "Min-heap by node load",
+          "rationale": "Balances load, not key placement."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Consistent hashing places nodes and keys on a ring, so adding or removing a node remaps only about 1/n of the keys and caches stay warm during resizes. Virtual nodes keep the load even.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Consistent hashing: lookup cost for one key with n nodes on the ring (sorted ring, binary search)?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(log n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "caching",
+        "sharding"
+      ]
+    },
+    {
+      "id": "hashing-002",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "min-heap",
+      "difficulty": 1,
+      "title": "Job scheduler queue",
+      "prompt": "A scheduler holds thousands of pending jobs, each with a run-at time. New jobs arrive constantly, and a worker repeatedly needs the job due soonest. Pick a structure that keeps both operations cheap.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Unsorted array, scan for min",
+          "rationale": "Inserting is cheap, but finding the soonest job scans every pending job each time."
+        },
+        {
+          "id": "b",
+          "label": "Always-sorted array",
+          "rationale": "Taking the soonest job is cheap, but every insert shifts elements and costs O(n)."
+        },
+        {
+          "id": "c",
+          "label": "Hash map keyed by run time",
+          "rationale": "Great for exact lookups, but it has no order, so finding the minimum still scans all keys."
+        },
+        {
+          "id": "d",
+          "label": "Min-heap on run-at time",
+          "rationale": "Peeking is O(1), and insert and extract-min cost O(log n) without maintaining a full ordering."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "A min-heap keeps the earliest run-at time at the root, so peeking is O(1) while insert and extract-min cost O(log n). The scheduler never needs the full sorted order, only the next job, so a heap does less work than keeping everything sorted.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "A min-heap removed its root, and the last job (10) moved to the root. Which node does it swap with first?",
+          "visual": {
+            "kind": "tree",
+            "caption": "Min-heap · last job moved to the root",
+            "start": "r",
+            "nodes": [
+              {
+                "id": "r",
+                "label": "10",
+                "x": 160,
+                "y": 40
+              },
+              {
+                "id": "a",
+                "label": "5",
+                "x": 90,
+                "y": 115
+              },
+              {
+                "id": "b",
+                "label": "8",
+                "x": 230,
+                "y": 115
+              },
+              {
+                "id": "c",
+                "label": "9",
+                "x": 50,
+                "y": 190
+              },
+              {
+                "id": "d",
+                "label": "6",
+                "x": 130,
+                "y": 190
+              },
+              {
+                "id": "e",
+                "label": "12",
+                "x": 210,
+                "y": 190
+              }
+            ],
+            "edges": [
+              {
+                "from": "r",
+                "to": "a"
+              },
+              {
+                "from": "r",
+                "to": "b"
+              },
+              {
+                "from": "a",
+                "to": "c"
+              },
+              {
+                "from": "a",
+                "to": "d"
+              },
+              {
+                "from": "b",
+                "to": "e"
+              }
+            ]
+          },
+          "answerTargetId": "a"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.6"
+        }
+      ],
+      "tags": [
+        "scheduling",
+        "priority-queue"
+      ]
+    },
+    {
+      "id": "hashing-003",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "top-k-heap",
+      "difficulty": 3,
+      "title": "Trending shelf",
+      "prompt": "A feed ranks 5M posts by engagement score. The trending shelf needs only the 10 highest scores, and the job must not sort everything or keep more than a handful of candidates in memory.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Min-heap capped at size 10",
+          "rationale": "The root is the weakest of the current top 10, so a new score replaces it only if larger. O(n log k) time, O(k) space."
+        },
+        {
+          "id": "b",
+          "label": "Max-heap of all scores",
+          "rationale": "Ten pops are cheap, but the heap holds all 5M scores and breaks the memory limit."
+        },
+        {
+          "id": "c",
+          "label": "Sort all, take the first 10",
+          "rationale": "Costs O(n log n) time and holds everything, far more work than ten values need."
+        },
+        {
+          "id": "d",
+          "label": "Max-heap capped at size 10",
+          "rationale": "Its root is the largest kept score, so the smallest of the top 10, the one to evict, is not at hand."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "To keep the K largest, use a min-heap of size K. Its root is the smallest of the current top K, so each new score is compared with the root in O(1) and replaces it in O(log K). Total O(n log K) time and O(K) space, which beats sorting when K is small.",
+      "complexity": {
+        "time": "O(n log k)",
+        "space": "O(k)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "space",
+          "question": "A min-heap of size k scans a stream of n scores. How much extra space does it use?",
+          "choices": [
+            "O(1)",
+            "O(k)",
+            "O(n)",
+            "O(n^2)"
+          ],
+          "answer": "O(k)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "17.2"
+        }
+      ],
+      "tags": [
+        "ranking",
+        "streaming"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "hashing-004",
+      "domain": "hashing",
+      "concept": "hash-set-dedup",
+      "difficulty": 1,
+      "title": "Drop duplicate events",
+      "prompt": "An ingest worker reads 200M order events per day from a queue. Each has an id, and an event whose id was already processed must be dropped immediately. The day's ids fit in memory.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Hash set of seen ids",
+          "rationale": "Expected O(1) membership test and insert per event, so the stream is handled in one pass."
+        },
+        {
+          "id": "b",
+          "label": "Sort all ids, then scan",
+          "rationale": "Needs the whole day first, so duplicates cannot be dropped on arrival; costs O(n log n)."
+        },
+        {
+          "id": "c",
+          "label": "Compare with every prior id",
+          "rationale": "Quadratic: the 200 millionth event is checked against about 200 million ids."
+        },
+        {
+          "id": "d",
+          "label": "Binary search tree of ids",
+          "rationale": "Works, but each lookup is O(log n) with pointer-heavy nodes; a hash set is cheaper at this volume."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Keep a hash set of processed ids. For each event, try to insert its id: if it was already present, drop the event; otherwise process it. Expected O(1) per event, one pass, no sorting. The cost is memory for all ids; if that stops fitting, consider a Bloom filter or a TTL.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Hash-set dedup of n events: expected total time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "streaming",
+        "dedup"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "hashing-005",
+      "domain": "hashing",
+      "concept": "lru-cache",
+      "difficulty": 2,
+      "title": "Hot profile cache",
+      "prompt": "A profile service keeps 10,000 hot profiles in memory. When the cache is full, it must evict the profile unused for the longest time. Both get and put must run in constant time.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Min-heap by last-access time",
+          "rationale": "Finding the oldest is quick, but every access must reorder the heap: O(log n), not constant."
+        },
+        {
+          "id": "b",
+          "label": "FIFO queue of keys",
+          "rationale": "Evicts the oldest inserted, not the least recently used; a hot profile would be evicted anyway."
+        },
+        {
+          "id": "c",
+          "label": "Hash map alone",
+          "rationale": "O(1) lookup, but no way to find the least recently used entry without scanning all keys."
+        },
+        {
+          "id": "d",
+          "label": "Hash map + linked list",
+          "rationale": "The map finds a node in O(1); the list reorders by recency and evicts the tail in O(1)."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "The map gives O(1) key-to-node lookup; the doubly linked list orders nodes from most to least recently used. On get or put, move the node to the front; when full, drop the tail and its map entry. Every step is a pointer change, so both operations are O(1).",
+      "complexity": {
+        "time": "O(1)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Hash map + doubly linked list: time per get or put?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)"
+          ],
+          "answer": "O(1)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "The list holds k4, k2, k7, k1 (most recent first) and the cache is full. A put of k9 arrives: tap the entry evicted.",
+          "visual": {
+            "kind": "array",
+            "caption": "Most recent on the left, oldest on the right",
+            "cells": [
+              {
+                "id": "k4",
+                "label": "k4"
+              },
+              {
+                "id": "k2",
+                "label": "k2"
+              },
+              {
+                "id": "k7",
+                "label": "k7"
+              },
+              {
+                "id": "k1",
+                "label": "k1"
+              }
+            ]
+          },
+          "answerTargetId": "k1"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.9"
+        },
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "caching",
+        "eviction"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "hashing-006",
+      "domain": "hashing",
+      "concept": "token-bucket",
+      "difficulty": 2,
+      "title": "Per-key rate limiting",
+      "prompt": "An API gateway limits each key to 5 requests per second on average but allows bursts of up to 20. With millions of keys, memory per key must stay constant and each check must be O(1).",
+      "options": [
+        {
+          "id": "a",
+          "label": "Log of request timestamps",
+          "rationale": "Exact, but stores up to a burst of timestamps per key, so memory grows with traffic."
+        },
+        {
+          "id": "b",
+          "label": "Fixed-window counter",
+          "rationale": "Cannot express average 5/s with bursts of 20, and a client can send double the limit across a window boundary."
+        },
+        {
+          "id": "c",
+          "label": "Token bucket per key",
+          "rationale": "Two numbers per key: tokens and last refill time. Refill lazily, spend one token per request."
+        },
+        {
+          "id": "d",
+          "label": "Min-heap of request times",
+          "rationale": "Expiring old timestamps costs O(log n) and still stores one entry per request."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Per key, store the token count and the time of the last refill. On each request, add elapsed time x 5 tokens up to a cap of 20, then spend one token or reject. Two numbers per key and O(1) work per check. The cap sets the burst; the refill rate sets the average.",
+      "complexity": {
+        "time": "O(1)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "space",
+          "question": "Token bucket: memory for one key as n requests arrive?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n^2)"
+          ],
+          "answer": "O(1)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.3",
+          "label": "Hash maps for per-key state"
+        }
+      ],
+      "tags": [
+        "rate-limiting",
+        "api"
+      ]
+    },
+    {
+      "id": "hashing-007",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "frequency-count",
+      "difficulty": 1,
+      "title": "Error code frequency",
+      "prompt": "A nightly job counts how often each of 40,000 distinct error codes appears across 50M log lines. Codes are arbitrary strings. Produce the counts in a single pass over the logs.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Sort lines, then count runs",
+          "rationale": "Needs all 50M lines ordered first: O(n log n) work and lots of memory, when one pass is enough."
+        },
+        {
+          "id": "b",
+          "label": "Array indexed by error code",
+          "rationale": "Codes are arbitrary strings, not small integers, so there is no array index to use."
+        },
+        {
+          "id": "c",
+          "label": "Hash map of code to count",
+          "rationale": "Each line costs one lookup and one increment, O(1) on average, so a single pass builds every count."
+        },
+        {
+          "id": "d",
+          "label": "Scan the logs once per code",
+          "rationale": "40,000 passes over 50M lines is about 2 x 10^12 line reads."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Frequency counting: keep a hash map from code to count. For each line, look up the code and add one, or insert 1 if it is new. One pass, O(n) expected time, and memory proportional to the number of distinct codes rather than lines. Sorting first also works but does O(n log n) work and needs everything up front.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(k)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Counting n log lines with a hash map, one lookup and update per line. What is the expected total time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "counting",
+        "logs"
+      ]
+    },
+    {
+      "id": "hashing-008",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "complement-lookup",
+      "difficulty": 1,
+      "title": "Refund pair matching",
+      "prompt": "Finance must find two ledger entries, out of a day's 100k, that add up to a refund amount. Checking every pair is too slow. Find a matching pair in a single pass over the entries.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Check every pair",
+          "rationale": "Nested loops cost O(n^2), about 5 billion checks for 100k entries."
+        },
+        {
+          "id": "b",
+          "label": "Hash map of seen amounts",
+          "rationale": "For each amount, look up target - amount among earlier entries: one pass, O(1) average per lookup."
+        },
+        {
+          "id": "c",
+          "label": "Sort, then binary search",
+          "rationale": "Sorting costs O(n log n) first, and it is not the single pass the job needs."
+        },
+        {
+          "id": "d",
+          "label": "Max-heap of amounts",
+          "rationale": "A heap exposes only its largest entry; it cannot look up a specific partner amount."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "For each amount a, the partner must equal target - a. A hash map of amounts already seen answers 'is the partner here?' in O(1) on average, so a single pass finds a pair in O(n) time and O(n) space. It trades memory for the O(n^2) cost of testing every pair.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "One pass over n entries, one hash lookup each. What is the expected time to find a pair?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Target 9. Scan left to right, looking for each value's partner among earlier values. Tap the cell where a partner is first found.",
+          "visual": {
+            "kind": "array",
+            "caption": "Ledger amounts, scan order",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "3"
+              },
+              {
+                "id": "c1",
+                "label": "8"
+              },
+              {
+                "id": "c2",
+                "label": "5"
+              },
+              {
+                "id": "c3",
+                "label": "6"
+              },
+              {
+                "id": "c4",
+                "label": "4"
+              }
+            ]
+          },
+          "answerTargetId": "c3"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "two-sum",
+        "ledger"
+      ]
+    },
+    {
+      "id": "hashing-009",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "two-heaps-median",
+      "difficulty": 2,
+      "title": "Live median response time",
+      "prompt": "A monitoring page shows the median response time of a request stream. New samples arrive constantly, and the median must be available right after each one, without re-sorting everything.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Re-sort after each sample",
+          "rationale": "O(n log n) per sample, so the cost explodes as the stream grows."
+        },
+        {
+          "id": "b",
+          "label": "One min-heap of all samples",
+          "rationale": "Exposes only the minimum; reaching the middle means popping half the heap."
+        },
+        {
+          "id": "c",
+          "label": "Insert into a sorted array",
+          "rationale": "The median is an index read, but each insert shifts O(n) elements to keep the order."
+        },
+        {
+          "id": "d",
+          "label": "Two heaps: max and min",
+          "rationale": "A max-heap holds the smaller half and a min-heap the larger half; the median sits at the tops, and an insert is O(log n)."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Split the samples into two halves: a max-heap for the smaller half and a min-heap for the larger half, rebalanced so their sizes differ by at most one. The median is the top of the larger heap, or the mean of both tops. Adding a sample costs O(log n) and reading the median is O(1).",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Two-heap running median: cost of adding one sample and reading the median, with n samples so far?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(log n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "18.2"
+        }
+      ],
+      "tags": [
+        "streaming",
+        "median"
+      ]
+    },
+    {
+      "id": "hashing-010",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "prefix-sum-hashmap",
+      "difficulty": 3,
+      "title": "Cash-flow window finder",
+      "prompt": "Finance has 1M daily net cash-flow figures, positive or negative. Count the contiguous day ranges whose total equals exactly a target T. A sliding window fails here, and testing every range is too slow.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Two-pointer sliding window",
+          "rationale": "Moving pointers by comparing the sum to T needs non-negative values; negatives break it."
+        },
+        {
+          "id": "b",
+          "label": "Test every start and end",
+          "rationale": "Even with a running sum per start, that is O(n^2) ranges, far too slow for 1M days."
+        },
+        {
+          "id": "c",
+          "label": "Sort values, then scan",
+          "rationale": "Sorting destroys the day order, and the ranges must be contiguous days."
+        },
+        {
+          "id": "d",
+          "label": "Prefix sums + hash map",
+          "rationale": "Counts earlier prefix sums equal to (current prefix - T) in O(1): one pass, O(n) time."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Let P[i] be the running total after day i. A range sums to T exactly when P[j] - P[i] = T, so at each day j count the earlier prefixes equal to P[j] - T. A hash map from prefix value to count answers that in O(1) on average: one pass, O(n) time, O(n) space. Seed the map with 0 for ranges that start on day one.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Prefix sums with a hash map over n daily figures, one lookup per day. What is the expected time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Target 3. Scanning left to right, tap the first day on which some range ending there sums to 3.",
+          "visual": {
+            "kind": "array",
+            "caption": "Daily net cash flow",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "1"
+              },
+              {
+                "id": "c1",
+                "label": "1"
+              },
+              {
+                "id": "c2",
+                "label": "2"
+              },
+              {
+                "id": "c3",
+                "label": "-2"
+              },
+              {
+                "id": "c4",
+                "label": "3"
+              }
+            ]
+          },
+          "answerTargetId": "c2"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "5.4"
+        },
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "prefix-sum",
+        "finance",
+        "subarray"
       ]
     }
   ]
