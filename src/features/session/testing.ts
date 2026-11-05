@@ -4,8 +4,10 @@
  */
 import bundle from "@/content/scenarios.v1.json";
 import { ScenarioBundleSchema, type Scenario } from "@/domain/content/schema";
+import { gradeValidation, initialAnswer, isAnswerComplete } from "@/domain/session/validation";
 import {
   idleSession,
+  XP_VALIDATION_CORRECT,
   XP_MATCH_CORRECT,
   XP_SESSION_COMPLETE,
   type SessionItem,
@@ -24,17 +26,71 @@ export function makeItems(count: number, order?: string[]): SessionItem[] {
 }
 
 /** Replaces the store with a working fake of the contract and starts on item 0. */
-export function installFakeSession(items: SessionItem[], opts: { practice?: boolean } = {}): void {
+export function installFakeSession(
+  items: SessionItem[],
+  opts: {
+    practice?: boolean;
+    /** false: skip the validation steps (match -> explanation). Default true, as the contract. */ validations?: boolean;
+  } = {},
+): void {
+  const withValidations = opts.validations ?? true;
   const set = useSessionStore.setState;
   const get = useSessionStore.getState;
-  const actions: Pick<SessionStore, "start" | "select" | "check" | "continueFromVerdict" | "setAnswer" | "checkValidation" | "continueFromValidation" | "nextScenario" | "end" | "reset"> = {
+  const actions: Pick<
+    SessionStore,
+    | "start"
+    | "select"
+    | "check"
+    | "continueFromVerdict"
+    | "setAnswer"
+    | "checkValidation"
+    | "continueFromValidation"
+    | "nextScenario"
+    | "end"
+    | "reset"
+  > = {
     start: async () => {},
-    setAnswer: () => {},
-    checkValidation: () => {},
-    continueFromValidation: () => {},
+    setAnswer: (answer) => {
+      const s = get().step;
+      if (s.kind === "validation" && !s.checked) set({ step: { ...s, answer } });
+    },
+    checkValidation: () => {
+      const s = get().step;
+      const it = get().items[get().index];
+      const v = it?.scenario.validations[s.kind === "validation" ? s.index : -1];
+      if (s.kind !== "validation" || s.checked || !it || !v || !isAnswerComplete(v, s.answer) || !s.answer)
+        return;
+      const grade = gradeValidation(v, s.answer);
+      const xp = grade.correct ? XP_VALIDATION_CORRECT : 0;
+      const results = get().results.map((r) =>
+        r.scenarioId === it.scenario.id
+          ? {
+              ...r,
+              xp: r.xp + xp,
+              validations: [
+                ...r.validations,
+                { type: v.type, correct: grade.correct, answer: s.answer!, positions: grade.positions, xp },
+              ],
+            }
+          : r,
+      );
+      set({ step: { ...s, checked: true }, results });
+    },
+    continueFromValidation: () => {
+      const s = get().step;
+      const it = get().items[get().index];
+      if (s.kind !== "validation" || !s.checked || !it) return;
+      const next = it.scenario.validations[s.index + 1];
+      set({
+        step: next
+          ? { kind: "validation", index: s.index + 1, answer: initialAnswer(next), checked: false }
+          : { kind: "feedback" },
+      });
+    },
     select: (optionId) => {
       const s = get().step;
-      if (s.kind === "question" && !s.checked) set({ step: { kind: "question", selectedOptionId: optionId, checked: false } });
+      if (s.kind === "question" && !s.checked)
+        set({ step: { kind: "question", selectedOptionId: optionId, checked: false } });
     },
     check: () => {
       const s = get().step;
@@ -59,7 +115,13 @@ export function installFakeSession(items: SessionItem[], opts: { practice?: bool
       });
     },
     continueFromVerdict: () => {
-      if (get().step.kind === "question") set({ step: { kind: "feedback" } });
+      if (get().step.kind !== "question") return;
+      const first = withValidations ? get().items[get().index]?.scenario.validations[0] : undefined;
+      set({
+        step: first
+          ? { kind: "validation", index: 0, answer: initialAnswer(first), checked: false }
+          : { kind: "feedback" },
+      });
     },
     nextScenario: () => {
       if (get().step.kind !== "feedback") return;

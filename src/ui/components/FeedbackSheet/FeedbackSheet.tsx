@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronUp, CircleCheck, CircleX } from "lucide-react";
 import { Button } from "@/ui/components/Button";
 import { Chip } from "@/ui/components/Chip";
@@ -17,7 +17,10 @@ export interface FeedbackOther {
 }
 
 export interface FeedbackCheck {
-  label: string;
+  /** Stable key (the validation index). */
+  id: string;
+  /** Text or rich content (a Complexity chip, a mono sequence). Prefix and value, e.g. "Big-O: O(log n)". */
+  label: ReactNode;
   passed: boolean;
 }
 
@@ -84,14 +87,19 @@ export function FeedbackSheet({
         </Button>
       }
     >
-      <div data-state={correct ? "correct" : "incorrect"} className="flex flex-col gap-4 px-4 pb-4 pt-6 sm:px-6">
+      <div
+        data-state={correct ? "correct" : "incorrect"}
+        className="flex flex-col gap-4 px-4 pb-4 pt-6 sm:px-6"
+      >
         <div className="grid grid-cols-[1.5rem_1fr_auto] items-center gap-x-2 border-b border-line-subtle pb-4">
           <Icon aria-hidden="true" size={24} className={correct ? "text-success-fg" : "text-error-fg"} />
           <h2 id={headingId} tabIndex={-1} className="text-title-2 text-fg outline-none">
             {correct ? "Correct" : "Not quite"}
           </h2>
           {xp > 0 ? <Chip tone="accent">+{xp} XP</Chip> : <span />}
-          {summaryLine ? <p className="col-span-2 col-start-2 text-caption text-fg-muted">{summaryLine}</p> : null}
+          {summaryLine ? (
+            <p className="col-span-2 col-start-2 text-caption text-fg-muted">{summaryLine}</p>
+          ) : null}
         </div>
 
         <section className="flex flex-col gap-2">
@@ -134,7 +142,11 @@ export function FeedbackSheet({
             {othersOpen ? (
               <ul id={`${uid}-others`} className="flex flex-col gap-3">
                 {others.map((o) => (
-                  <li key={o.id} className="grid grid-cols-[1rem_1fr] gap-x-2" data-pick={o.isPick ? "" : undefined}>
+                  <li
+                    key={o.id}
+                    className="grid grid-cols-[1rem_1fr] gap-x-2"
+                    data-pick={o.isPick ? "" : undefined}
+                  >
                     <CircleX
                       aria-hidden="true"
                       size={16}
@@ -157,7 +169,11 @@ export function FeedbackSheet({
             <h3 className="text-title-3 text-fg">Your checks</h3>
             <ul className="flex flex-col gap-2">
               {checks.map((c) => (
-                <li key={c.label} className="flex items-center gap-2 text-body-sm text-fg">
+                <li
+                  key={c.id}
+                  data-passed={c.passed ? "" : undefined}
+                  className="flex items-center gap-2 text-body-sm text-fg"
+                >
                   {c.passed ? (
                     <CircleCheck aria-hidden="true" size={20} className="text-success-fg" />
                   ) : (

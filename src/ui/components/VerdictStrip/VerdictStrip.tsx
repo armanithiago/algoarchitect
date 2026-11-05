@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { CircleCheck, CircleX } from "lucide-react";
 import { Chip } from "@/ui/components/Chip";
 import { cx } from "@/ui/lib/cx";
@@ -5,7 +6,7 @@ import { cx } from "@/ui/lib/cx";
 export interface VerdictStripProps {
   correct: boolean;
   /** One line: "Consistent hashing is the fit." / "Best fit: Consistent hashing." */
-  detail: string;
+  detail: ReactNode;
   /** Shown as a chip only when above zero. */
   xp?: number;
   /** The AnswerDock live region already announces the verdict; this keeps the `status` role without a second announcement. */

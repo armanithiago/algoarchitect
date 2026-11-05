@@ -11,8 +11,20 @@ const base: FeedbackSheetProps = {
   explanation: "Adding or removing a node remaps only about 1/n of the keys.",
   complexity: { time: "O(log n)", space: "O(n)" },
   others: [
-    { id: "a", keyLabel: "A", label: "Modulo hashing", rationale: "Changing n remaps almost every key.", isPick: false },
-    { id: "d", keyLabel: "D", label: "Min-heap by node load", rationale: "Balances load, not placement.", isPick: false },
+    {
+      id: "a",
+      keyLabel: "A",
+      label: "Modulo hashing",
+      rationale: "Changing n remaps almost every key.",
+      isPick: false,
+    },
+    {
+      id: "d",
+      keyLabel: "D",
+      label: "Min-heap by node load",
+      rationale: "Balances load, not placement.",
+      isPick: false,
+    },
   ],
   last: false,
   onNext: () => {},
@@ -73,11 +85,35 @@ describe("FeedbackSheet", () => {
       <FeedbackSheet
         {...base}
         summaryLine="1 of 1 check passed"
-        checks={[{ label: "Big-O: O(log n)", passed: true }]}
+        checks={[{ id: "0", label: "Big-O: O(log n)", passed: true }]}
       />,
     );
     expect(screen.getByText("1 of 1 check passed")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Your checks" })).toBeInTheDocument();
+  });
+
+  it("'Your checks' rows pair an icon with the text: circle-check passed, circle-x failed", () => {
+    render(
+      <FeedbackSheet
+        {...base}
+        summaryLine="1 of 2 checks passed"
+        checks={[
+          { id: "0", label: "Big-O: O(log n)", passed: true },
+          { id: "1", label: "Trace order: 4 of 6 in place", passed: false },
+        ]}
+      />,
+    );
+    const rows = screen
+      .getByRole("heading", { name: "Your checks" })
+      .closest("section")!
+      .querySelectorAll("li");
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveAttribute("data-passed");
+    expect(rows[0]!.querySelector("svg")).not.toBeNull();
+    expect(rows[1]).not.toHaveAttribute("data-passed");
+    expect(rows[1]).toHaveTextContent("Trace order: 4 of 6 in place");
+    expect(rows[1]!.querySelector("svg")).not.toBeNull();
+    expect(screen.getByText("1 of 2 checks passed")).toBeInTheDocument();
   });
 
   it("footer is the only exit: Next scenario / See summary, Esc maps to it, scrim does nothing", async () => {

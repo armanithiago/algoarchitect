@@ -24,7 +24,7 @@ const tile = (name: RegExp | string) => screen.getByRole("radio", { name });
 beforeEach(() => {
   window.localStorage.clear();
   useProfileStore.setState({ ...initialProfile, hydrated: true });
-  installFakeSession(makeItems(3));
+  installFakeSession(makeItems(3), { validations: false });
 });
 afterEach(() => {
   vi.useRealTimers();
@@ -34,12 +34,17 @@ afterEach(() => {
 
 describe("Session: question", () => {
   it("renders top bar, stage and the tiles in optionOrder with key letters", () => {
-    installFakeSession(makeItems(3, ["d", "c", "b", "a"]));
+    installFakeSession(makeItems(3, ["d", "c", "b", "a"]), { validations: false });
     renderSession();
-    expect(screen.getByRole("progressbar", { name: "Session progress" })).toHaveAttribute("aria-valuetext", "Scenario 1 of 3");
+    expect(screen.getByRole("progressbar", { name: "Session progress" })).toHaveAttribute(
+      "aria-valuetext",
+      "Scenario 1 of 3",
+    );
     expect(screen.getByRole("heading", { level: 1, name: "Cache cluster resizing" })).toBeInTheDocument();
     expect(screen.getByText(/New · D2/)).toBeInTheDocument();
-    const radios = within(screen.getByRole("radiogroup", { name: "Which approach fits best?" })).getAllByRole("radio");
+    const radios = within(screen.getByRole("radiogroup", { name: "Which approach fits best?" })).getAllByRole(
+      "radio",
+    );
     expect(radios.map((r) => r.getAttribute("aria-label"))).toEqual([
       "Min-heap by node load",
       "Sorted array + binary search",
@@ -96,7 +101,7 @@ describe("Session: question", () => {
     expect(screen.queryByText("Tap the approach that fits best, then Check.")).toBeNull();
     expect(window.localStorage.getItem("aa.coachSeen")).toBe("1");
     unmount();
-    installFakeSession(makeItems(3));
+    installFakeSession(makeItems(3), { validations: false });
     renderSession();
     expect(screen.queryByText("Tap the approach that fits best, then Check.")).toBeNull();
   });
@@ -208,7 +213,7 @@ describe("Session: verdict", () => {
 
     vibrate.mockClear();
     act(() => useProfileStore.setState({ settings: { ...initialProfile.settings, haptics: false } }));
-    act(() => installFakeSession(makeItems(3)));
+    act(() => installFakeSession(makeItems(3), { validations: false }));
     fireEvent.click(tile("Consistent hashing"));
     fireEvent.click(screen.getByRole("button", { name: "Check" }));
     expect(vibrate).not.toHaveBeenCalled();
@@ -269,7 +274,7 @@ describe("Session: explanation and ending", () => {
   });
 
   it("the last scenario reads See summary and navigates to /summary", async () => {
-    installFakeSession(makeItems(1));
+    installFakeSession(makeItems(1), { validations: false });
     const user = await toFeedback("Consistent hashing");
     await user.click(screen.getByRole("button", { name: "See summary" }));
     expect(await screen.findByText("summary route")).toBeInTheDocument();
@@ -282,7 +287,9 @@ describe("Session: explanation and ending", () => {
     const before = useSessionStore.getState().step;
     await user.click(screen.getByRole("button", { name: "End session" }));
     const dialog = screen.getByRole("dialog", { name: "End this session?" });
-    expect(dialog).toHaveAccessibleDescription("Your 0 answers are saved. Finish a session to count today's streak.");
+    expect(dialog).toHaveAccessibleDescription(
+      "Your 0 answers are saved. Finish a session to count today's streak.",
+    );
     const buttons = within(dialog).getAllByRole("button");
     expect(buttons.map((b) => b.textContent)).toEqual(["End session", "Keep going"]);
     expect(within(dialog).getByRole("button", { name: "Keep going" })).toHaveFocus();
