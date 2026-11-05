@@ -26,3 +26,60 @@ jobs:
       - run: npm run build
       - name: Lighthouse CI (mobile emulation, vite preview)
         run: npx lhci autorun --config=lighthouserc.json
+
+  # Agent code review: runs only on pull requests, only after `verify` (build, tests, Lighthouse) passes.
+  # Needs the repository secret ANTHROPIC_API_KEY. Without it the job warns and skips (CI stays green, NO review).
+  # The reviewer is read-only (.claude/agents/code-reviewer.md). Its structured verdict gates the merge.
+  review:
+    needs: verify
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check reviewer credentials
+        id: key
+        env:
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Agent reviewer skipped::Add the ANTHROPIC_API_KEY repository secret to enable the agent code reviewer."
+          fi
+      - name: Agent code review
+        id: review
+        if: steps.key.outputs.present == 'true'
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          use_sticky_comment: true
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            Act as the code reviewer defined in .claude/agents/code-reviewer.md.
+            Read that file first and follow it exactly. Review only this pull request.
+          claude_args: |
+            --max-turns 20
+            --allowedTools "Read,Grep,Glob,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git diff:*),Bash(git log:*),mcp__github_inline_comment__create_inline_comment"
+            --json-schema '{"type":"object","properties":{"approve":{"type":"boolean"},"blocking":{"type":"number"},"summary":{"type":"string"}},"required":["approve","blocking","summary"]}'
+      - name: Gate on the review verdict
+        if: steps.key.outputs.present == 'true'
+        env:
+          RESULT: ${{ steps.review.outputs.structured_output }}
+        run: |
+          echo "$RESULT" | jq -r '.summary'
+          if [ "$(echo "$RESULT" | jq -r '.approve')" != "true" ]; then
+            echo "::error title=Agent review::The reviewer requested changes ($(echo "$RESULT" | jq -r '.blocking') blocking)."
+            exit 1
+          fi
