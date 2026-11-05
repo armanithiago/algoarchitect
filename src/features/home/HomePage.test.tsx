@@ -1,5 +1,8 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { idleSession } from "@/domain/session/types";
+import { useSessionStore } from "@/stores/session";
 import { initialProfile, useProfileStore } from "@/stores/profile";
 import { HomeHeader } from "./HomeHeader";
 import { HomePage } from "./HomePage";
@@ -12,16 +15,33 @@ function setProfile(patch: Partial<typeof initialProfile>) {
 
 function renderHome() {
   return render(
-    <>
-      <div data-testid="header">
-        <HomeHeader />
-      </div>
-      <HomePage />
-    </>,
+    <MemoryRouter initialEntries={["/"]}>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <>
+              <div data-testid="header">
+                <HomeHeader />
+              </div>
+              <HomePage />
+            </>
+          }
+        />
+        <Route path="/session" element={<p>session route</p>} />
+      </Routes>
+    </MemoryRouter>,
   );
 }
 
-beforeEach(() => setProfile({ hydrated: true }));
+const realActions = {
+  start: useSessionStore.getState().start,
+};
+
+beforeEach(() => {
+  setProfile({ hydrated: true });
+  act(() => useSessionStore.setState({ ...idleSession, ...realActions }));
+});
 afterEach(() => vi.useRealTimers());
 
 describe("Home: first run", () => {
@@ -42,11 +62,9 @@ describe("Home: first run", () => {
     expect(header.getByRole("img", { name: "Level 1" })).toHaveTextContent("L1");
   });
 
-  it("has an enabled Start session button that does nothing yet (TODO Sprint 2)", () => {
+  it("has an enabled Start session button", () => {
     renderHome();
-    const cta = screen.getByRole("button", { name: "Start session" });
-    expect(cta).not.toHaveAttribute("aria-disabled");
-    expect(() => fireEvent.click(cta)).not.toThrow();
+    expect(screen.getByRole("button", { name: "Start session" })).not.toHaveAttribute("aria-disabled");
   });
 });
 
@@ -137,5 +155,63 @@ describe("Home: storage blocked", () => {
     );
     // The app still works: CTA enabled.
     expect(screen.getByRole("button", { name: "Start session" })).not.toHaveAttribute("aria-disabled");
+  });
+});
+
+describe("Home: start flow", () => {
+  const question = { kind: "question", selectedOptionId: null, checked: false } as const;
+
+  it("shows a loading state while start() resolves, then opens /session", async () => {
+    let finish: () => void = () => {};
+    useSessionStore.setState({
+      start: () =>
+        new Promise<void>((resolve) => {
+          finish = () => {
+            useSessionStore.setState({ step: question });
+            resolve();
+          };
+        }),
+    });
+    renderHome();
+    fireEvent.click(screen.getByRole("button", { name: "Start session" }));
+    const cta = screen.getByRole("button", { name: "Start session" });
+    expect(cta).toHaveAttribute("aria-busy", "true");
+    expect(cta).toHaveAttribute("aria-disabled", "true");
+    await act(async () => finish());
+    expect(await screen.findByText("session route")).toBeInTheDocument();
+  });
+
+  it("resumes a running session without calling start() again", async () => {
+    const start = vi.fn(async () => {});
+    useSessionStore.setState({ start, step: question });
+    renderHome();
+    fireEvent.click(screen.getByRole("button", { name: "Start session" }));
+    expect(await screen.findByText("session route")).toBeInTheDocument();
+    expect(start).not.toHaveBeenCalled();
+  });
+
+  it("shows the load error EmptyState with a primary Reload when the store reports loadError", async () => {
+    useSessionStore.setState({
+      start: async () => {
+        useSessionStore.setState({ loadError: "boom" } as never);
+      },
+    });
+    renderHome();
+    fireEvent.click(screen.getByRole("button", { name: "Start session" }));
+    expect(await screen.findByText("Couldn't load scenarios. Reload to try again.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reload" })).toHaveAttribute("data-variant", "primary");
+    expect(screen.queryByRole("button", { name: "Start session" })).toBeNull();
+    useSessionStore.setState({ loadError: undefined } as never);
+  });
+
+  it("treats a rejected start() as a load failure", async () => {
+    useSessionStore.setState({
+      start: async () => {
+        throw new Error("nope");
+      },
+    });
+    renderHome();
+    fireEvent.click(screen.getByRole("button", { name: "Start session" }));
+    expect(await screen.findByRole("button", { name: "Reload" })).toBeInTheDocument();
   });
 });
