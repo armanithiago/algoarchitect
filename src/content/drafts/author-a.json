@@ -1,0 +1,1494 @@
+{
+  "schema": 1,
+  "contentVersion": 1,
+  "conceptNames": {
+    "flood-fill": "Flood fill",
+    "bipartite-check": "Bipartite check",
+    "minimum-spanning-tree": "Minimum spanning tree",
+    "cycle-detection": "Cycle detection",
+    "union-find": "Union-find",
+    "bellman-ford": "Bellman-Ford",
+    "bounded-shortest-path": "Hop-limited shortest path",
+    "grid-paths": "Grid path counting",
+    "space-optimized-dp": "Space-optimized DP",
+    "max-non-adjacent-sum": "Non-adjacent selection",
+    "coin-change": "Coin change",
+    "edit-distance": "Edit distance",
+    "lis": "Longest increasing subsequence",
+    "state-machine-dp": "State machine DP",
+    "hash-set-dedup": "Hash set dedup",
+    "lru-cache": "LRU cache",
+    "token-bucket": "Token bucket"
+  },
+  "scenarios": [
+    {
+      "version": 1,
+      "id": "graphs-004",
+      "domain": "graphs",
+      "concept": "flood-fill",
+      "difficulty": 1,
+      "title": "Count flooded regions",
+      "prompt": "A satellite water mask is a 4000 x 4000 grid of cells. Two water cells belong to the same flooded region if they touch left, right, up or down. Report how many separate regions exist.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Dijkstra from the top-left",
+          "rationale": "Computes weighted distances from one source; it does not group cells into regions."
+        },
+        {
+          "id": "b",
+          "label": "Compare every pair of cells",
+          "rationale": "About 10^14 pairs for 16M cells, and chains of touching cells still need merging."
+        },
+        {
+          "id": "c",
+          "label": "Flood fill from new cells",
+          "rationale": "Each unvisited water cell starts a DFS or BFS that marks its whole region, so every cell is touched once."
+        },
+        {
+          "id": "d",
+          "label": "Sort cells, binary search",
+          "rationale": "Sorting by position gives lookup, not connectivity; touching chains still have to be followed."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Scan the grid; each unvisited water cell starts a flood fill (DFS or BFS) that marks its whole region, and each start adds one to the count. Every cell is visited a constant number of times. At this size use an explicit stack or queue, since deep recursion can overflow.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Flood fill labels every region of a grid with n cells in total. What is the time cost?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceOrder",
+          "question": "Tap the order a depth-first flood fill reaches the cells, starting at A. Neighbors are tried in alphabetical order.",
+          "visual": {
+            "kind": "graph",
+            "caption": "Water cells; edges join touching cells",
+            "start": "A",
+            "nodes": [
+              {
+                "id": "A",
+                "label": "A",
+                "x": 60,
+                "y": 60
+              },
+              {
+                "id": "B",
+                "label": "B",
+                "x": 160,
+                "y": 60
+              },
+              {
+                "id": "C",
+                "label": "C",
+                "x": 260,
+                "y": 60
+              },
+              {
+                "id": "D",
+                "label": "D",
+                "x": 60,
+                "y": 170
+              },
+              {
+                "id": "E",
+                "label": "E",
+                "x": 160,
+                "y": 170
+              },
+              {
+                "id": "F",
+                "label": "F",
+                "x": 260,
+                "y": 170
+              }
+            ],
+            "edges": [
+              {
+                "from": "A",
+                "to": "B"
+              },
+              {
+                "from": "B",
+                "to": "C"
+              },
+              {
+                "from": "A",
+                "to": "D"
+              },
+              {
+                "from": "B",
+                "to": "E"
+              },
+              {
+                "from": "E",
+                "to": "F"
+              },
+              {
+                "from": "C",
+                "to": "F"
+              }
+            ]
+          },
+          "algorithm": "dfs",
+          "tieBreak": "alphabetical",
+          "givenPrefix": 1,
+          "answer": [
+            "A",
+            "B",
+            "C",
+            "F",
+            "E",
+            "D"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "13.5"
+        }
+      ],
+      "tags": [
+        "grids",
+        "regions"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "graphs-005",
+      "domain": "graphs",
+      "concept": "bipartite-check",
+      "difficulty": 1,
+      "title": "Two-room conference split",
+      "prompt": "A conference has two rooms. Some speaker pairs clash and cannot share a room. Decide whether every speaker can be placed so no clashing pair sits together, and output one valid split.",
+      "options": [
+        {
+          "id": "a",
+          "label": "BFS two-coloring",
+          "rationale": "Alternate colors level by level; an edge joining two same-colored speakers proves no valid split exists."
+        },
+        {
+          "id": "b",
+          "label": "Plain union-find on clashes",
+          "rationale": "Plain union-find merges clashing speakers into one set, the opposite of separating them."
+        },
+        {
+          "id": "c",
+          "label": "Kruskal spanning tree",
+          "rationale": "Picks cheap edges to connect everything; it says nothing about which room each speaker takes."
+        },
+        {
+          "id": "d",
+          "label": "Topological sort",
+          "rationale": "Needs directed edges and no cycles; clashes are undirected, and an order is not a two-way split."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Two-color the clash graph with BFS: color the start, give each neighbor the opposite color, and fail if an edge joins two same-colored speakers. A split exists exactly when the graph has no odd-length cycle. Linear time; repeat from each unvisited speaker for separate groups.",
+      "complexity": {
+        "time": "O(V + E)",
+        "space": "O(V)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "BFS two-coloring on V speakers and E clash pairs (adjacency lists): time?",
+          "choices": [
+            "O(V)",
+            "O(V + E)",
+            "O(V^2)",
+            "O(2^V)"
+          ],
+          "answer": "O(V + E)"
+        },
+        {
+          "type": "traceOrder",
+          "question": "Tap the order BFS visits the speakers, starting at S1. Neighbors are queued in alphabetical order.",
+          "visual": {
+            "kind": "graph",
+            "caption": "Edges join speakers who clash",
+            "start": "S1",
+            "nodes": [
+              {
+                "id": "S1",
+                "label": "S1",
+                "x": 60,
+                "y": 70
+              },
+              {
+                "id": "S2",
+                "label": "S2",
+                "x": 160,
+                "y": 70
+              },
+              {
+                "id": "S3",
+                "label": "S3",
+                "x": 260,
+                "y": 70
+              },
+              {
+                "id": "S4",
+                "label": "S4",
+                "x": 260,
+                "y": 170
+              },
+              {
+                "id": "S5",
+                "label": "S5",
+                "x": 160,
+                "y": 170
+              },
+              {
+                "id": "S6",
+                "label": "S6",
+                "x": 60,
+                "y": 170
+              }
+            ],
+            "edges": [
+              {
+                "from": "S1",
+                "to": "S2"
+              },
+              {
+                "from": "S2",
+                "to": "S3"
+              },
+              {
+                "from": "S3",
+                "to": "S4"
+              },
+              {
+                "from": "S4",
+                "to": "S5"
+              },
+              {
+                "from": "S5",
+                "to": "S6"
+              },
+              {
+                "from": "S6",
+                "to": "S1"
+              },
+              {
+                "from": "S2",
+                "to": "S5"
+              }
+            ]
+          },
+          "algorithm": "bfs",
+          "tieBreak": "alphabetical",
+          "givenPrefix": 1,
+          "answer": [
+            "S1",
+            "S2",
+            "S6",
+            "S3",
+            "S5",
+            "S4"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "13.6"
+        }
+      ],
+      "tags": [
+        "scheduling",
+        "two-coloring"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "graphs-006",
+      "domain": "graphs",
+      "concept": "minimum-spanning-tree",
+      "difficulty": 2,
+      "title": "Cabling six offices",
+      "prompt": "A company must connect six offices with fiber. Each possible link has a trenching cost. Pick links so every office can reach every other and the total cost is as low as possible.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Dijkstra from headquarters",
+          "rationale": "Minimizes each office's distance to HQ, not the total cable laid; its shortest-path tree can cost more overall."
+        },
+        {
+          "id": "b",
+          "label": "Minimum spanning tree",
+          "rationale": "Connects every office with the lowest total link cost and no redundant loops."
+        },
+        {
+          "id": "c",
+          "label": "BFS tree from headquarters",
+          "rationale": "Minimizes the number of hops and ignores link cost entirely."
+        },
+        {
+          "id": "d",
+          "label": "Topological sort of offices",
+          "rationale": "Orders directed dependencies; fiber links are undirected and carry costs."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "A minimum spanning tree connects all vertices with the lowest total edge weight and no cycles. Prim grows it from a start node by always adding the cheapest edge leaving the tree; Kruskal sorts edges and adds each one that joins two components (using union-find). Both are about O(E log V).",
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "Prim's algorithm starts at HQ and repeatedly adds the cheapest link leaving the tree. Tap the office it connects first.",
+          "visual": {
+            "kind": "graph",
+            "caption": "Link labels are trenching costs",
+            "start": "HQ",
+            "nodes": [
+              {
+                "id": "HQ",
+                "label": "HQ",
+                "x": 50,
+                "y": 120
+              },
+              {
+                "id": "A",
+                "label": "A",
+                "x": 140,
+                "y": 50
+              },
+              {
+                "id": "B",
+                "label": "B",
+                "x": 140,
+                "y": 190
+              },
+              {
+                "id": "C",
+                "label": "C",
+                "x": 230,
+                "y": 50
+              },
+              {
+                "id": "D",
+                "label": "D",
+                "x": 230,
+                "y": 190
+              },
+              {
+                "id": "E",
+                "label": "E",
+                "x": 285,
+                "y": 120
+              }
+            ],
+            "edges": [
+              {
+                "from": "HQ",
+                "to": "A",
+                "weight": 4
+              },
+              {
+                "from": "HQ",
+                "to": "B",
+                "weight": 2
+              },
+              {
+                "from": "A",
+                "to": "B",
+                "weight": 5
+              },
+              {
+                "from": "A",
+                "to": "C",
+                "weight": 6
+              },
+              {
+                "from": "B",
+                "to": "D",
+                "weight": 3
+              },
+              {
+                "from": "C",
+                "to": "D",
+                "weight": 5
+              },
+              {
+                "from": "C",
+                "to": "E",
+                "weight": 7
+              },
+              {
+                "from": "D",
+                "to": "E",
+                "weight": 4
+              }
+            ]
+          },
+          "answerTargetId": "B"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "29.5"
+        }
+      ],
+      "tags": [
+        "networks",
+        "cost"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "graphs-007",
+      "domain": "graphs",
+      "concept": "cycle-detection",
+      "difficulty": 2,
+      "title": "Circular migration check",
+      "prompt": "Before a release, 50,000 database migrations are loaded, each listing the migrations it must run after. Reject the release if any chain of these links loops back to itself.",
+      "options": [
+        {
+          "id": "a",
+          "label": "BFS with one visited set",
+          "rationale": "A shared visited set flags a diamond (two paths to one migration) as a loop although none exists."
+        },
+        {
+          "id": "b",
+          "label": "Union-find on the links",
+          "rationale": "Treats links as undirected, so A->B, A->C, B->D, C->D looks like a cycle but is a valid order."
+        },
+        {
+          "id": "c",
+          "label": "Dijkstra from each migration",
+          "rationale": "Shortest paths do not report loops, and running it from each node is needlessly expensive."
+        },
+        {
+          "id": "d",
+          "label": "DFS tracking current path",
+          "rationale": "Mark nodes on the current path; an edge back to one of them closes a cycle. Finished nodes are skipped."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Run DFS with three states per node: unseen, on the current path, done. An edge to a node on the current path is a back edge and proves a cycle; an edge to a done node is harmless. Kahn's algorithm gives the same verdict (leftover nodes mean a cycle). Linear time.",
+      "complexity": {
+        "time": "O(V + E)",
+        "space": "O(V)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "space",
+          "question": "DFS cycle check: extra memory beyond the adjacency list (state marks and path stack)?",
+          "choices": [
+            "O(1)",
+            "O(V)",
+            "O(V + E)",
+            "O(V^2)"
+          ],
+          "answer": "O(V)"
+        },
+        {
+          "type": "traceOrder",
+          "question": "Tap the order DFS visits the migrations, starting at A. Out-neighbors are tried in alphabetical order.",
+          "visual": {
+            "kind": "graph",
+            "caption": "Arrow means: runs before",
+            "start": "A",
+            "nodes": [
+              {
+                "id": "A",
+                "label": "A",
+                "x": 60,
+                "y": 70
+              },
+              {
+                "id": "B",
+                "label": "B",
+                "x": 160,
+                "y": 70
+              },
+              {
+                "id": "C",
+                "label": "C",
+                "x": 260,
+                "y": 70
+              },
+              {
+                "id": "D",
+                "label": "D",
+                "x": 260,
+                "y": 170
+              },
+              {
+                "id": "E",
+                "label": "E",
+                "x": 160,
+                "y": 170
+              },
+              {
+                "id": "F",
+                "label": "F",
+                "x": 60,
+                "y": 170
+              }
+            ],
+            "edges": [
+              {
+                "from": "A",
+                "to": "B",
+                "directed": true
+              },
+              {
+                "from": "A",
+                "to": "F",
+                "directed": true
+              },
+              {
+                "from": "B",
+                "to": "C",
+                "directed": true
+              },
+              {
+                "from": "C",
+                "to": "D",
+                "directed": true
+              },
+              {
+                "from": "D",
+                "to": "E",
+                "directed": true
+              },
+              {
+                "from": "E",
+                "to": "B",
+                "directed": true
+              },
+              {
+                "from": "F",
+                "to": "E",
+                "directed": true
+              }
+            ]
+          },
+          "algorithm": "dfs",
+          "tieBreak": "alphabetical",
+          "givenPrefix": 1,
+          "answer": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "13.8"
+        }
+      ],
+      "tags": [
+        "dependencies",
+        "release"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "graphs-008",
+      "domain": "graphs",
+      "concept": "union-find",
+      "difficulty": 2,
+      "title": "Live network connectivity",
+      "prompt": "Links between 10 million hosts come online one at a time. After each new link, the dashboard must answer whether two given hosts are connected, in near-constant time. Links never go offline.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Re-run BFS for each query",
+          "rationale": "Each query costs O(V + E) and the graph keeps growing; far too slow at this scale."
+        },
+        {
+          "id": "b",
+          "label": "Union-find (disjoint sets)",
+          "rationale": "Union merges two sets and find returns a root; both run in near-constant amortized time."
+        },
+        {
+          "id": "c",
+          "label": "Dijkstra for each query",
+          "rationale": "Computes weighted shortest paths when only yes or no is needed, and is still a full search per query."
+        },
+        {
+          "id": "d",
+          "label": "Floyd-Warshall matrix",
+          "rationale": "O(V^3) time and O(V^2) memory is impossible at 10 million hosts, and each new link forces a rebuild."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Union-find keeps a forest of parent pointers: union merges two hosts' sets and find returns a set's root. With path compression and union by rank, each operation is nearly constant amortized time (inverse Ackermann), so a stream of links and queries stays cheap. It supports adding links, not removing them.",
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "space",
+          "question": "Union-find over n hosts: extra memory for the parent and rank arrays?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "14.5"
+        },
+        {
+          "sectionId": "14.1"
+        }
+      ],
+      "tags": [
+        "networking",
+        "connectivity"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "graphs-009",
+      "domain": "graphs",
+      "concept": "bellman-ford",
+      "difficulty": 3,
+      "title": "Rebate loops in routing",
+      "prompt": "Freight legs have a cost, and some legs pay a negative rebate. From one hub, find the cheapest cost to every port, and detect whether a loop of rebates could drive costs down without limit.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Dijkstra with a min-heap",
+          "rationale": "Assumes non-negative weights; a negative edge can lower an already settled distance, so results are wrong."
+        },
+        {
+          "id": "b",
+          "label": "BFS by number of legs",
+          "rationale": "Counts legs, not cost, so it ignores the rebates entirely."
+        },
+        {
+          "id": "c",
+          "label": "Bellman-Ford",
+          "rationale": "Relaxes every edge V-1 times, handles negative weights, and one extra round exposes a negative cycle."
+        },
+        {
+          "id": "d",
+          "label": "Floyd-Warshall",
+          "rationale": "Can flag negative cycles, but computes all pairs in O(V^3); wasteful when you need one source."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Bellman-Ford relaxes every edge V-1 times; after round k, distances are correct for paths of at most k edges. One extra round that still improves a distance proves a negative cycle is reachable. It handles negative weights at O(V E) cost, slower than Dijkstra.",
+      "complexity": {
+        "time": "O(V E)",
+        "space": "O(V)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Bellman-Ford on V ports and E legs, including the extra cycle-check round: time?",
+          "choices": [
+            "O(V + E)",
+            "O((V + E) log V)",
+            "O(V E)",
+            "O(2^V)"
+          ],
+          "answer": "O(V E)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "29.3"
+        }
+      ],
+      "tags": [
+        "negative-weights",
+        "logistics"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "graphs-010",
+      "domain": "graphs",
+      "concept": "bounded-shortest-path",
+      "difficulty": 3,
+      "title": "Cheapest fare, two layovers",
+      "prompt": "A flight search must return the cheapest fare from A to B using at most two layovers (three flights). Fares are positive, and a cheaper route with more flights must not be returned.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Bellman-Ford, 3 rounds",
+          "rationale": "Each round adds one flight; after 3 rounds distances cover routes of up to 3 flights, relaxing from the last round's copy."
+        },
+        {
+          "id": "b",
+          "label": "Dijkstra with a visited set",
+          "rationale": "Settling a city at its cheapest fare can discard a pricier route with fewer flights, the only one that fits."
+        },
+        {
+          "id": "c",
+          "label": "BFS, then take the cheapest",
+          "rationale": "BFS finds the fewest flights, not the lowest fare; the cheapest legal route may use more flights."
+        },
+        {
+          "id": "d",
+          "label": "Floyd-Warshall table",
+          "rationale": "Gives unconstrained all-pairs fares and has no way to cap the number of flights."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Bound the number of edges: run Bellman-Ford for K+1 rounds (K layovers), relaxing each round from a copy of the previous round's distances so a path grows by one flight per round. Cost is O(K E). Dijkstra over (city, flights used) states also works but is heavier to write.",
+      "complexity": {
+        "time": "O(K E)",
+        "space": "O(V)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Bellman-Ford capped at K+1 rounds over E flights (K layovers, K < V): time?",
+          "choices": [
+            "O(E)",
+            "O(K E)",
+            "O(V E)",
+            "O(2^V)"
+          ],
+          "answer": "O(K E)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "29.3"
+        }
+      ],
+      "tags": [
+        "travel",
+        "constraints"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-004",
+      "domain": "dp",
+      "concept": "grid-paths",
+      "difficulty": 1,
+      "title": "Count robot routes",
+      "prompt": "A warehouse robot moves only right or down across an R x C grid of aisles. Some cells are blocked. Count the distinct routes from the entrance to the dock, modulo 1,000,000,007.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Enumerate every route (DFS)",
+          "rationale": "Route counts grow exponentially; listing each one is far too slow even for modest grids."
+        },
+        {
+          "id": "b",
+          "label": "Grid DP: ways = top + left",
+          "rationale": "Each cell's route count is the sum from above and from the left; every cell is computed once."
+        },
+        {
+          "id": "c",
+          "label": "BFS shortest path",
+          "rationale": "Finds the shortest length, which is the same for every route here; it does not count routes."
+        },
+        {
+          "id": "d",
+          "label": "Dijkstra over cell costs",
+          "rationale": "There are no costs to minimize; the task is to count routes, which shortest-path search does not do."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Let ways[r][c] be the number of routes to a cell: zero if blocked, otherwise ways from above plus ways from the left, with the entrance as 1. Fill row by row; each cell is computed once. Keeping only the previous row cuts memory to O(C).",
+      "complexity": {
+        "time": "O(R C)",
+        "space": "O(C)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "For an n x n grid, what is the time to fill the table?",
+          "choices": [
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n^2)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.6"
+        }
+      ],
+      "tags": [
+        "grids",
+        "counting"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-005",
+      "domain": "dp",
+      "concept": "space-optimized-dp",
+      "difficulty": 1,
+      "title": "Constant-memory recurrence",
+      "prompt": "A pricing model defines f(n) = f(n-1) + f(n-2) mod p, with n up to 50 million. Memoized recursion overflows the stack and the memo table eats RAM. Compute f(n) with constant extra memory.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Memoized recursion + map",
+          "rationale": "Still recurses n levels deep and stores n entries: the exact problems you hit."
+        },
+        {
+          "id": "b",
+          "label": "Plain recursion",
+          "rationale": "Recomputes the same subproblems and takes exponential time."
+        },
+        {
+          "id": "c",
+          "label": "Bottom-up, two variables",
+          "rationale": "Each step reads only the previous two values, so two variables replace the whole table."
+        },
+        {
+          "id": "d",
+          "label": "Full table of n + 1 entries",
+          "rationale": "Fixes the stack but still stores 50 million entries when only the last two are ever read."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Each value depends only on the previous two, so iterate upward from the base cases and keep two variables, updating them every step. No recursion and no table: O(n) time and O(1) extra memory. The same idea shrinks any DP that reads a fixed number of earlier states.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "space",
+          "question": "Bottom-up f(n) keeping only the last two values: extra memory?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n^2)"
+          ],
+          "answer": "O(1)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.15"
+        },
+        {
+          "sectionId": "22.2"
+        }
+      ],
+      "tags": [
+        "tabulation",
+        "memory"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-006",
+      "domain": "dp",
+      "concept": "max-non-adjacent-sum",
+      "difficulty": 1,
+      "title": "Ad slots, no back-to-back",
+      "prompt": "An ad planner has 365 days of slot revenue. Policy forbids ads on two consecutive days. Choose the days that maximize total revenue.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Take the largest slot first",
+          "rationale": "Greedy fails: with 4, 5, 4 it takes the 5 and earns 5, while the two 4s earn 8."
+        },
+        {
+          "id": "b",
+          "label": "Alternate days only",
+          "rationale": "Odd or even days can miss the best pair; with 10, 1, 1, 10 it earns 11, not 20."
+        },
+        {
+          "id": "c",
+          "label": "Try every subset of days",
+          "rationale": "2^365 subsets is hopeless; most of the work repeats the same prefixes."
+        },
+        {
+          "id": "d",
+          "label": "DP: max(skip, take)",
+          "rationale": "Either skip day i, or take it and add best[i-2]; each day is O(1)."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Let best[i] be the maximum revenue using days up to i: either skip day i (best[i-1]) or take it (best[i-2] + revenue[i]). Each day costs O(1), and only the last two values are needed. This is the take-or-skip DP for any neighbor constraint.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Take-or-skip DP over n days: time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.5"
+        }
+      ],
+      "tags": [
+        "advertising",
+        "constraints"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-007",
+      "domain": "dp",
+      "concept": "coin-change",
+      "difficulty": 2,
+      "title": "Fewest vouchers",
+      "prompt": "A store issues credit as vouchers worth 1, 3 or 4 points. For any balance up to 10,000 points, issue the fewest vouchers that add up to the balance exactly.",
+      "options": [
+        {
+          "id": "a",
+          "label": "DP over balances",
+          "rationale": "dp[x] = 1 + the minimum dp[x - v] over vouchers v; every sub-balance is solved once."
+        },
+        {
+          "id": "b",
+          "label": "Greedy: largest first",
+          "rationale": "Fails here: 6 points gives 4+1+1 (3 vouchers), but 3+3 needs only 2."
+        },
+        {
+          "id": "c",
+          "label": "Recursion without caching",
+          "rationale": "Branches on every voucher at every step: exponential time, with the same sub-balances repeating."
+        },
+        {
+          "id": "d",
+          "label": "Sort vouchers, two pointers",
+          "rationale": "Two pointers find pairs summing to a target; the number of vouchers is unbounded here."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Let dp[x] be the fewest vouchers for balance x, with dp[0] = 0. Then dp[x] = 1 + min(dp[x - v]) over vouchers v <= x. Fill x upward; each cell reads a few earlier cells. Greedy works only for special systems such as 1, 5, 10, 25.",
+      "complexity": {
+        "time": "O(n k)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Fewest-voucher DP for balance n with a fixed handful of voucher values: time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Vouchers are 1, 3, 4. dp[6] is 1 + the smallest dp[6 - v]. Tap the earlier cell that gives dp[6] its minimum.",
+          "visual": {
+            "kind": "array",
+            "caption": "dp[i]: fewest vouchers for i points",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "0"
+              },
+              {
+                "id": "c1",
+                "label": "1"
+              },
+              {
+                "id": "c2",
+                "label": "2"
+              },
+              {
+                "id": "c3",
+                "label": "3"
+              },
+              {
+                "id": "c4",
+                "label": "4"
+              },
+              {
+                "id": "c5",
+                "label": "5"
+              },
+              {
+                "id": "c6",
+                "label": "6"
+              }
+            ]
+          },
+          "answerTargetId": "c3"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.8"
+        }
+      ],
+      "tags": [
+        "optimization",
+        "change-making"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-008",
+      "domain": "dp",
+      "concept": "edit-distance",
+      "difficulty": 2,
+      "title": "Did-you-mean ranking",
+      "prompt": "Search suggests corrections by ranking dictionary words by the fewest single-character insertions, deletions or replacements needed to turn the typed query into the word. Strings are under 40 characters.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Hamming distance",
+          "rationale": "Compares same-length strings position by position; one inserted letter shifts everything and ruins the score."
+        },
+        {
+          "id": "b",
+          "label": "LCS length alone",
+          "rationale": "Models only insertions and deletions, so a replacement costs 2 instead of 1 and rankings change."
+        },
+        {
+          "id": "c",
+          "label": "Edit-distance DP table",
+          "rationale": "d[i][j] covers the first i and j characters; each cell takes the cheapest of replace, delete or insert."
+        },
+        {
+          "id": "d",
+          "label": "Compare sorted letters",
+          "rationale": "Ignores order, so 'form' and 'from' look identical."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Let d[i][j] be the edits to turn the first i characters of a into the first j of b. If the characters match, copy d[i-1][j-1]; otherwise take 1 + the minimum of replace d[i-1][j-1], delete d[i-1][j] or insert d[i][j-1]. The table is filled once per word pair.",
+      "complexity": {
+        "time": "O(m n)",
+        "space": "O(m n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Two strings of length n: time to fill the edit-distance table?",
+          "choices": [
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n^2)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.6"
+        }
+      ],
+      "tags": [
+        "search",
+        "strings"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-009",
+      "domain": "dp",
+      "concept": "lis",
+      "difficulty": 2,
+      "title": "Gradual latency climb",
+      "prompt": "From 200,000 latency samples in time order, find the longest chain of samples that strictly rise, not necessarily adjacent. A long chain signals slow degradation. The job must finish in seconds.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Sliding window of rises",
+          "rationale": "Finds only contiguous rises; a chain may skip over noisy samples."
+        },
+        {
+          "id": "b",
+          "label": "O(n^2) LIS table",
+          "rationale": "Correct but O(n^2): about 4 x 10^10 steps for 200,000 samples."
+        },
+        {
+          "id": "c",
+          "label": "Sort samples, count distinct",
+          "rationale": "Sorting discards time order, which is exactly what defines a rising chain."
+        },
+        {
+          "id": "d",
+          "label": "Tails array + binary search",
+          "rationale": "tails[k] is the smallest tail of a chain of length k+1; binary search per sample gives O(n log n)."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Keep tails, where tails[k] is the smallest possible last value of a rising chain of length k+1. For each sample, binary-search its slot: replace the first value >= it (strict rise), or append if none. The final size of tails is the chain length: O(n log n) time. Recovering the chain needs extra bookkeeping.",
+      "complexity": {
+        "time": "O(n log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Tails-array LIS over n samples: time?",
+          "choices": [
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n log n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.10"
+        }
+      ],
+      "tags": [
+        "monitoring",
+        "subsequence"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "dp-010",
+      "domain": "dp",
+      "concept": "state-machine-dp",
+      "difficulty": 3,
+      "title": "Trading with a cooldown",
+      "prompt": "A bot holds at most one share. After a sale it must sit out one full day before buying again. Given n daily prices, find the maximum profit over the whole period.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Sum every daily price rise",
+          "rationale": "Ignores the cooldown: it sells on day 3 and buys on day 4, which the rules forbid."
+        },
+        {
+          "id": "b",
+          "label": "Hold / sold / rest state DP",
+          "rationale": "Three states per day carry exactly the information the cooldown rule needs."
+        },
+        {
+          "id": "c",
+          "label": "Best single buy then sell",
+          "rationale": "Allows one trade only; several trades with a cooldown can earn more."
+        },
+        {
+          "id": "d",
+          "label": "Sort, buy low, sell high",
+          "rationale": "Sorting destroys time order; you cannot buy a price that appears after you sell."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Track three states per day: holding a share, just sold (cooldown tomorrow), or resting with none. From the previous day: hold = max(hold, rest - price), sold = hold + price, rest = max(rest, sold). The answer is max(sold, rest) on the last day. One pass, constant memory.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Three-state cooldown DP over n days: time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)",
+            "O(2^n)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Prices are 1, 2, 3, 0, 2 with the cooldown rule. In the best plan (profit 3), tap the day of its first sale.",
+          "visual": {
+            "kind": "array",
+            "caption": "Daily prices, day 1 to day 5",
+            "cells": [
+              {
+                "id": "d1",
+                "label": "1"
+              },
+              {
+                "id": "d2",
+                "label": "2"
+              },
+              {
+                "id": "d3",
+                "label": "3"
+              },
+              {
+                "id": "d4",
+                "label": "0"
+              },
+              {
+                "id": "d5",
+                "label": "2"
+              }
+            ]
+          },
+          "answerTargetId": "d2"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "22.12"
+        }
+      ],
+      "tags": [
+        "trading",
+        "state-machine"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "hashing-004",
+      "domain": "hashing",
+      "concept": "hash-set-dedup",
+      "difficulty": 1,
+      "title": "Drop duplicate events",
+      "prompt": "An ingest worker reads 200M order events per day from a queue. Each has an id, and an event whose id was already processed must be dropped immediately. The day's ids fit in memory.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Hash set of seen ids",
+          "rationale": "Expected O(1) membership test and insert per event, so the stream is handled in one pass."
+        },
+        {
+          "id": "b",
+          "label": "Sort all ids, then scan",
+          "rationale": "Needs the whole day first, so duplicates cannot be dropped on arrival; costs O(n log n)."
+        },
+        {
+          "id": "c",
+          "label": "Compare with every prior id",
+          "rationale": "Quadratic: the 200 millionth event is checked against about 200 million ids."
+        },
+        {
+          "id": "d",
+          "label": "Binary search tree of ids",
+          "rationale": "Works, but each lookup is O(log n) with pointer-heavy nodes; a hash set is cheaper at this volume."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Keep a hash set of processed ids. For each event, try to insert its id: if it was already present, drop the event; otherwise process it. Expected O(1) per event, one pass, no sorting. The cost is memory for all ids; if that stops fitting, consider a Bloom filter or a TTL.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Hash-set dedup of n events: expected total time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "streaming",
+        "dedup"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "hashing-005",
+      "domain": "hashing",
+      "concept": "lru-cache",
+      "difficulty": 2,
+      "title": "Hot profile cache",
+      "prompt": "A profile service keeps 10,000 hot profiles in memory. When the cache is full, it must evict the profile unused for the longest time. Both get and put must run in constant time.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Min-heap by last-access time",
+          "rationale": "Finding the oldest is quick, but every access must reorder the heap: O(log n), not constant."
+        },
+        {
+          "id": "b",
+          "label": "FIFO queue of keys",
+          "rationale": "Evicts the oldest inserted, not the least recently used; a hot profile would be evicted anyway."
+        },
+        {
+          "id": "c",
+          "label": "Hash map alone",
+          "rationale": "O(1) lookup, but no way to find the least recently used entry without scanning all keys."
+        },
+        {
+          "id": "d",
+          "label": "Hash map + linked list",
+          "rationale": "The map finds a node in O(1); the list reorders by recency and evicts the tail in O(1)."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "The map gives O(1) key-to-node lookup; the doubly linked list orders nodes from most to least recently used. On get or put, move the node to the front; when full, drop the tail and its map entry. Every step is a pointer change, so both operations are O(1).",
+      "complexity": {
+        "time": "O(1)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Hash map + doubly linked list: time per get or put?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)"
+          ],
+          "answer": "O(1)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "The list holds k4, k2, k7, k1 (most recent first) and the cache is full. A put of k9 arrives: tap the entry evicted.",
+          "visual": {
+            "kind": "array",
+            "caption": "Most recent on the left, oldest on the right",
+            "cells": [
+              {
+                "id": "k4",
+                "label": "k4"
+              },
+              {
+                "id": "k2",
+                "label": "k2"
+              },
+              {
+                "id": "k7",
+                "label": "k7"
+              },
+              {
+                "id": "k1",
+                "label": "k1"
+              }
+            ]
+          },
+          "answerTargetId": "k1"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.9"
+        },
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "caching",
+        "eviction"
+      ]
+    },
+    {
+      "version": 1,
+      "id": "hashing-006",
+      "domain": "hashing",
+      "concept": "token-bucket",
+      "difficulty": 2,
+      "title": "Per-key rate limiting",
+      "prompt": "An API gateway limits each key to 5 requests per second on average but allows bursts of up to 20. With millions of keys, memory per key must stay constant and each check must be O(1).",
+      "options": [
+        {
+          "id": "a",
+          "label": "Log of request timestamps",
+          "rationale": "Exact, but stores up to a burst of timestamps per key, so memory grows with traffic."
+        },
+        {
+          "id": "b",
+          "label": "Fixed-window counter",
+          "rationale": "Cannot express average 5/s with bursts of 20, and a client can send double the limit across a window boundary."
+        },
+        {
+          "id": "c",
+          "label": "Token bucket per key",
+          "rationale": "Two numbers per key: tokens and last refill time. Refill lazily, spend one token per request."
+        },
+        {
+          "id": "d",
+          "label": "Min-heap of request times",
+          "rationale": "Expiring old timestamps costs O(log n) and still stores one entry per request."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Per key, store the token count and the time of the last refill. On each request, add elapsed time x 5 tokens up to a cap of 20, then spend one token or reject. Two numbers per key and O(1) work per check. The cap sets the burst; the refill rate sets the average.",
+      "complexity": {
+        "time": "O(1)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "space",
+          "question": "Token bucket: memory for one key as n requests arrive?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n^2)"
+          ],
+          "answer": "O(1)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.3",
+          "label": "Hash maps for per-key state"
+        }
+      ],
+      "tags": [
+        "rate-limiting",
+        "api"
+      ]
+    }
+  ]
+}
