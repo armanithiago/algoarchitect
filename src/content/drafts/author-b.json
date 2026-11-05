@@ -1,0 +1,952 @@
+{
+  "schema": 1,
+  "contentVersion": 1,
+  "conceptNames": {
+    "level-order-traversal": "Level-order traversal",
+    "postorder-traversal": "Postorder traversal",
+    "preorder-traversal": "Preorder traversal",
+    "bst-minimum": "BST minimum lookup",
+    "bfs-shallowest-match": "BFS shallowest match",
+    "lowest-common-ancestor": "Lowest common ancestor",
+    "ordered-interval-index": "Ordered interval index"
+  },
+  "scenarios": [
+    {
+      "id": "trees-004",
+      "version": 1,
+      "domain": "trees",
+      "concept": "level-order-traversal",
+      "difficulty": 1,
+      "title": "Org chart rollout",
+      "prompt": "A company rolls out a policy through its org chart: the CEO first, then every direct report, then everyone one step further down. Each layer must be finished before the next one starts. Pick the traversal that gives this order.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Preorder (DFS)",
+          "rationale": "Follows one branch down to its leaf before touching the next, so a distant report is notified before a peer."
+        },
+        {
+          "id": "b",
+          "label": "Level-order (BFS)",
+          "rationale": "A queue releases every person at one depth before anyone deeper, which is exactly the rollout order."
+        },
+        {
+          "id": "c",
+          "label": "Postorder (DFS)",
+          "rationale": "Visits reports before their manager, the reverse of a top-down rollout."
+        },
+        {
+          "id": "d",
+          "label": "In-order traversal",
+          "rationale": "Defined for binary trees and visits a node between its children, not layer by layer."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Level-order traversal (BFS) keeps a queue: dequeue a person, enqueue their reports. Everyone at depth d leaves the queue before anyone at depth d + 1, so the rollout runs layer by layer. Each person is visited once, and the queue holds at most one wide layer.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "traceOrder",
+          "question": "Tap the people in the order level-order (BFS) reaches them from the CEO. Direct reports are queued left to right.",
+          "visual": {
+            "kind": "tree",
+            "caption": "Org chart · start CEO",
+            "start": "CEO",
+            "nodes": [
+              {
+                "id": "CEO",
+                "label": "CEO",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "CTO",
+                "label": "CTO",
+                "x": 90,
+                "y": 94
+              },
+              {
+                "id": "CFO",
+                "label": "CFO",
+                "x": 230,
+                "y": 94
+              },
+              {
+                "id": "Dev",
+                "label": "Dev",
+                "x": 50,
+                "y": 152
+              },
+              {
+                "id": "QA",
+                "label": "QA",
+                "x": 130,
+                "y": 152
+              },
+              {
+                "id": "Fin",
+                "label": "Fin",
+                "x": 230,
+                "y": 152
+              },
+              {
+                "id": "Web",
+                "label": "Web",
+                "x": 50,
+                "y": 210
+              }
+            ],
+            "edges": [
+              {
+                "from": "CEO",
+                "to": "CTO"
+              },
+              {
+                "from": "CEO",
+                "to": "CFO"
+              },
+              {
+                "from": "CTO",
+                "to": "Dev"
+              },
+              {
+                "from": "CTO",
+                "to": "QA"
+              },
+              {
+                "from": "CFO",
+                "to": "Fin"
+              },
+              {
+                "from": "Dev",
+                "to": "Web"
+              }
+            ]
+          },
+          "algorithm": "bfs",
+          "tieBreak": "authored",
+          "givenPrefix": 1,
+          "answer": [
+            "CEO",
+            "CTO",
+            "CFO",
+            "Dev",
+            "QA",
+            "Fin",
+            "Web"
+          ]
+        },
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Level-order traversal of an org chart with n people. What is the time to visit everyone?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "12.2"
+        },
+        {
+          "sectionId": "2.5"
+        }
+      ],
+      "tags": [
+        "org-chart",
+        "bfs",
+        "levels"
+      ]
+    },
+    {
+      "id": "trees-005",
+      "version": 1,
+      "domain": "trees",
+      "concept": "postorder-traversal",
+      "difficulty": 1,
+      "title": "Folder size report",
+      "prompt": "A disk-usage tool reports each folder's total size: its own files plus the totals of all its subfolders. Pick the traversal that has every subfolder's total ready before its parent needs it.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Preorder traversal",
+          "rationale": "Reaches a folder before its subfolders, so the child totals it needs do not exist yet."
+        },
+        {
+          "id": "b",
+          "label": "Level-order (BFS)",
+          "rationale": "Goes top-down, layer by layer, so parents come first. Totals would need a second bottom-up pass."
+        },
+        {
+          "id": "c",
+          "label": "In-order traversal",
+          "rationale": "Only defined for binary trees, and it visits a folder between its children, not after both."
+        },
+        {
+          "id": "d",
+          "label": "Postorder traversal",
+          "rationale": "Finishes both subtrees before the folder itself, so each total is built from totals that already exist."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "A folder's total depends on its children's totals, so the children must be finished first. Postorder visits the left subtree, the right subtree, then the node, so each result is computed from results that already exist. One pass: O(n) time, O(h) stack for tree height h. Deleting a directory tree follows the same order.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(h)"
+      },
+      "validations": [
+        {
+          "type": "traceOrder",
+          "question": "Tap the folders in postorder: left subtree, right subtree, then the folder itself.",
+          "visual": {
+            "kind": "tree",
+            "caption": "Folder tree · start usr",
+            "start": "usr",
+            "nodes": [
+              {
+                "id": "usr",
+                "label": "usr",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "bin",
+                "label": "bin",
+                "x": 90,
+                "y": 110
+              },
+              {
+                "id": "lib",
+                "label": "lib",
+                "x": 230,
+                "y": 110
+              },
+              {
+                "id": "ls",
+                "label": "ls",
+                "x": 50,
+                "y": 184
+              },
+              {
+                "id": "cp",
+                "label": "cp",
+                "x": 130,
+                "y": 184
+              },
+              {
+                "id": "py",
+                "label": "py",
+                "x": 190,
+                "y": 184
+              },
+              {
+                "id": "js",
+                "label": "js",
+                "x": 270,
+                "y": 184
+              }
+            ],
+            "edges": [
+              {
+                "from": "usr",
+                "to": "bin"
+              },
+              {
+                "from": "usr",
+                "to": "lib"
+              },
+              {
+                "from": "bin",
+                "to": "ls"
+              },
+              {
+                "from": "bin",
+                "to": "cp"
+              },
+              {
+                "from": "lib",
+                "to": "py"
+              },
+              {
+                "from": "lib",
+                "to": "js"
+              }
+            ]
+          },
+          "algorithm": "postorder",
+          "tieBreak": "authored",
+          "givenPrefix": 1,
+          "answer": [
+            "ls",
+            "cp",
+            "bin",
+            "py",
+            "js",
+            "lib",
+            "usr"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "11.4"
+        }
+      ],
+      "tags": [
+        "filesystem",
+        "bottom-up"
+      ]
+    },
+    {
+      "id": "trees-006",
+      "version": 1,
+      "domain": "trees",
+      "concept": "preorder-traversal",
+      "difficulty": 1,
+      "title": "Category tree export",
+      "prompt": "A catalog exports its category tree as one flat list. The importer reads it once, top to bottom, and must see every category before its subcategories, with each whole subtree contiguous so it can be copied as a block.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Preorder traversal",
+          "rationale": "Emits a node, then its whole left subtree, then its whole right one: parents first and every subtree contiguous."
+        },
+        {
+          "id": "b",
+          "label": "Postorder traversal",
+          "rationale": "Subtrees stay contiguous, but each parent comes after its children, so the importer sees children first."
+        },
+        {
+          "id": "c",
+          "label": "Level-order (BFS)",
+          "rationale": "Parents come first, but a subtree is scattered across levels and cannot be copied as one block."
+        },
+        {
+          "id": "d",
+          "label": "In-order traversal",
+          "rationale": "Places a node between its subtrees, so a parent can follow some of its own descendants."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Preorder writes a node, then its entire left subtree, then its entire right subtree. Parents always precede descendants and each subtree is one contiguous run, so the importer can read once and slice by subtree. Add null markers for missing children to rebuild the exact shape. O(n) time, O(h) stack.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(h)"
+      },
+      "validations": [
+        {
+          "type": "traceOrder",
+          "question": "Tap the categories in preorder: the category, then its left subtree, then its right subtree.",
+          "visual": {
+            "kind": "tree",
+            "caption": "Category tree · start All",
+            "start": "All",
+            "nodes": [
+              {
+                "id": "All",
+                "label": "All",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "Men",
+                "label": "Men",
+                "x": 90,
+                "y": 98
+              },
+              {
+                "id": "Wom",
+                "label": "Wom",
+                "x": 240,
+                "y": 98
+              },
+              {
+                "id": "Sho",
+                "label": "Sho",
+                "x": 50,
+                "y": 160
+              },
+              {
+                "id": "Tee",
+                "label": "Tee",
+                "x": 130,
+                "y": 160
+              },
+              {
+                "id": "Bag",
+                "label": "Bag",
+                "x": 270,
+                "y": 160
+              },
+              {
+                "id": "Sox",
+                "label": "Sox",
+                "x": 150,
+                "y": 214
+              }
+            ],
+            "edges": [
+              {
+                "from": "All",
+                "to": "Men"
+              },
+              {
+                "from": "All",
+                "to": "Wom"
+              },
+              {
+                "from": "Men",
+                "to": "Sho"
+              },
+              {
+                "from": "Men",
+                "to": "Tee"
+              },
+              {
+                "from": "Tee",
+                "to": "Sox"
+              },
+              {
+                "from": "Wom",
+                "to": "Bag"
+              }
+            ]
+          },
+          "algorithm": "preorder",
+          "tieBreak": "authored",
+          "givenPrefix": 1,
+          "answer": [
+            "All",
+            "Men",
+            "Sho",
+            "Tee",
+            "Sox",
+            "Wom",
+            "Bag"
+          ]
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "11.2"
+        }
+      ],
+      "tags": [
+        "serialization",
+        "export"
+      ]
+    },
+    {
+      "id": "trees-007",
+      "version": 1,
+      "domain": "trees",
+      "concept": "bst-minimum",
+      "difficulty": 1,
+      "title": "Cheapest listing lookup",
+      "prompt": "A marketplace keeps listings in a balanced BST keyed by price. The homepage shows the cheapest listing on every request, thousands of times a second. Fetch it without scanning the whole catalog.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Read the root node",
+          "rationale": "The root is a middle key, not the smallest. Smaller keys sit in its left subtree."
+        },
+        {
+          "id": "b",
+          "label": "Full in-order, take first",
+          "rationale": "Correct, but it visits all n nodes when the minimum is a short walk down the left edge."
+        },
+        {
+          "id": "c",
+          "label": "Walk left to the last node",
+          "rationale": "Every key in a left subtree is smaller, so the leftmost node is the minimum, reached in O(log n) steps."
+        },
+        {
+          "id": "d",
+          "label": "Walk right to the last node",
+          "rationale": "That reaches the largest key, the most expensive listing."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "In a BST every key in a left subtree is smaller than its node, so the minimum is the leftmost node. Follow left children until none remains: one step per level, O(h), which is O(log n) while the tree stays balanced. The maximum mirrors this to the right.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "You are looking for the minimum key. Starting at the root, which node do you move to first?",
+          "visual": {
+            "kind": "tree",
+            "caption": "BST keyed by price · start 50",
+            "start": "50",
+            "nodes": [
+              {
+                "id": "50",
+                "label": "50",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "30",
+                "label": "30",
+                "x": 90,
+                "y": 98
+              },
+              {
+                "id": "70",
+                "label": "70",
+                "x": 230,
+                "y": 98
+              },
+              {
+                "id": "20",
+                "label": "20",
+                "x": 50,
+                "y": 160
+              },
+              {
+                "id": "40",
+                "label": "40",
+                "x": 130,
+                "y": 160
+              },
+              {
+                "id": "60",
+                "label": "60",
+                "x": 200,
+                "y": 160
+              },
+              {
+                "id": "80",
+                "label": "80",
+                "x": 270,
+                "y": 160
+              }
+            ],
+            "edges": [
+              {
+                "from": "50",
+                "to": "30"
+              },
+              {
+                "from": "50",
+                "to": "70"
+              },
+              {
+                "from": "30",
+                "to": "20"
+              },
+              {
+                "from": "30",
+                "to": "40"
+              },
+              {
+                "from": "70",
+                "to": "60"
+              },
+              {
+                "from": "70",
+                "to": "80"
+              }
+            ]
+          },
+          "answerTargetId": "30"
+        },
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Finding the minimum key in a balanced BST of n nodes. What is the time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)"
+          ],
+          "answer": "O(log n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "11.7"
+        },
+        {
+          "sectionId": "2.5"
+        }
+      ],
+      "tags": [
+        "bst",
+        "ordered-set",
+        "marketplace"
+      ]
+    },
+    {
+      "id": "trees-008",
+      "version": 1,
+      "domain": "trees",
+      "concept": "bfs-shallowest-match",
+      "difficulty": 2,
+      "title": "Nearest flagged category",
+      "prompt": "A category tree is wide and very deep. Moderation needs the shallowest category carrying an age-restricted flag, and the search should stop as soon as that answer is certain instead of reading every node.",
+      "options": [
+        {
+          "id": "a",
+          "label": "BFS, stop at first flag",
+          "rationale": "Nodes come out in depth order, so the first flagged one is the shallowest and nothing deeper is read."
+        },
+        {
+          "id": "b",
+          "label": "DFS, stop at the first flag",
+          "rationale": "A deep left branch can hold a flag while a shallower one sits on the right, so the first flag found may not be the shallowest."
+        },
+        {
+          "id": "c",
+          "label": "Full DFS, keep the minimum",
+          "rationale": "Correct, but it reads every node, including the deep branches the search was meant to skip."
+        },
+        {
+          "id": "d",
+          "label": "Postorder traversal",
+          "rationale": "Visits children before parents, so the deepest flags surface first: the opposite of what is wanted."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "BFS visits nodes in order of depth, so the first flagged node it dequeues is at the minimum depth and the search can stop there. DFS must finish a deep branch before it can rule out a shallower flag elsewhere. The worst case is still O(n) when no node matches, and the queue may hold a whole level.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "BFS looks for the shallowest flagged node among n categories. What is the worst-case time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "12.4"
+        },
+        {
+          "sectionId": "12.7"
+        }
+      ],
+      "tags": [
+        "bfs",
+        "early-exit",
+        "moderation"
+      ]
+    },
+    {
+      "id": "trees-009",
+      "version": 1,
+      "domain": "trees",
+      "concept": "lowest-common-ancestor",
+      "difficulty": 3,
+      "title": "Closest shared role",
+      "prompt": "A permissions service stores roles as a plain binary tree: no key ordering, no parent pointers, 1M nodes. Given two role IDs, find the closest role above both, using no more extra memory than the recursion depth.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Compare keys, BST-style",
+          "rationale": "Needs ordered keys. In an unordered tree a comparison says nothing about which subtree holds a role."
+        },
+        {
+          "id": "b",
+          "label": "DFS, merge at the split",
+          "rationale": "Each call reports what its subtree found. The first node with a hit on both sides is the LCA. One pass, O(h) stack."
+        },
+        {
+          "id": "c",
+          "label": "Walk up with a parent map",
+          "rationale": "The tree has no parent pointers, and building a parent map costs O(n) extra memory."
+        },
+        {
+          "id": "d",
+          "label": "Level-order, pick shallower",
+          "rationale": "The shallower node is not necessarily an ancestor of the other, so levels alone do not find the split."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Recurse from the root: return a node as soon as it matches either role, otherwise combine the results of the two subtrees. The first node whose left and right calls both return a hit is the split point, the LCA. If one role is an ancestor of the other, it is the LCA. O(n) time, O(h) stack.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(h)"
+      },
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "Tap the lowest common ancestor of D and G. A node counts as its own descendant.",
+          "visual": {
+            "kind": "tree",
+            "caption": "Role tree · start R",
+            "start": "R",
+            "nodes": [
+              {
+                "id": "R",
+                "label": "R",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "A",
+                "label": "A",
+                "x": 90,
+                "y": 98
+              },
+              {
+                "id": "B",
+                "label": "B",
+                "x": 230,
+                "y": 98
+              },
+              {
+                "id": "C",
+                "label": "C",
+                "x": 50,
+                "y": 160
+              },
+              {
+                "id": "D",
+                "label": "D",
+                "x": 130,
+                "y": 160
+              },
+              {
+                "id": "E",
+                "label": "E",
+                "x": 200,
+                "y": 160
+              },
+              {
+                "id": "F",
+                "label": "F",
+                "x": 270,
+                "y": 160
+              },
+              {
+                "id": "G",
+                "label": "G",
+                "x": 150,
+                "y": 214
+              }
+            ],
+            "edges": [
+              {
+                "from": "R",
+                "to": "A"
+              },
+              {
+                "from": "R",
+                "to": "B"
+              },
+              {
+                "from": "A",
+                "to": "C"
+              },
+              {
+                "from": "A",
+                "to": "D"
+              },
+              {
+                "from": "B",
+                "to": "E"
+              },
+              {
+                "from": "B",
+                "to": "F"
+              },
+              {
+                "from": "D",
+                "to": "G"
+              }
+            ]
+          },
+          "answerTargetId": "D"
+        },
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Recursive LCA search in a plain binary tree of n nodes. What is the worst-case time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "11.6"
+        }
+      ],
+      "tags": [
+        "lca",
+        "permissions",
+        "recursion"
+      ]
+    },
+    {
+      "id": "trees-010",
+      "version": 1,
+      "domain": "trees",
+      "concept": "ordered-interval-index",
+      "difficulty": 3,
+      "title": "Calendar conflict check",
+      "prompt": "A booking API holds up to 5M non-overlapping reservations. Bookings are added and cancelled all day, and each new request must be accepted or rejected in real time. Reject any slot that overlaps an existing one.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Sorted array, binary search",
+          "rationale": "Finding the neighbors is O(log n), but every booking or cancellation shifts O(n) elements."
+        },
+        {
+          "id": "b",
+          "label": "Scan every booking",
+          "rationale": "O(n) per request across 5M reservations, and it ignores that order narrows the check to two neighbors."
+        },
+        {
+          "id": "c",
+          "label": "Balanced BST on start time",
+          "rationale": "Insert and delete in O(log n). Only the predecessor and successor can overlap a new slot, so check just those two."
+        },
+        {
+          "id": "d",
+          "label": "Hash map keyed by start",
+          "rationale": "Finds an exact start quickly, but overlap depends on neighbors, and a hash map has no order to find them."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Keep reservations in a balanced BST (a sorted set) keyed by start time. They never overlap, so a new slot can only collide with the booking just before it or just after it: find those two neighbors and compare their ends and starts. Search, insert and delete are all O(log n), which a sorted array cannot match on updates.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "traceFirstStep",
+          "question": "A new booking starts at 35. Tap its predecessor: the latest existing start before 35.",
+          "visual": {
+            "kind": "tree",
+            "caption": "BST keyed by start time · start 40",
+            "start": "40",
+            "nodes": [
+              {
+                "id": "40",
+                "label": "40",
+                "x": 160,
+                "y": 36
+              },
+              {
+                "id": "20",
+                "label": "20",
+                "x": 90,
+                "y": 98
+              },
+              {
+                "id": "60",
+                "label": "60",
+                "x": 230,
+                "y": 98
+              },
+              {
+                "id": "10",
+                "label": "10",
+                "x": 50,
+                "y": 160
+              },
+              {
+                "id": "30",
+                "label": "30",
+                "x": 130,
+                "y": 160
+              },
+              {
+                "id": "50",
+                "label": "50",
+                "x": 200,
+                "y": 160
+              },
+              {
+                "id": "70",
+                "label": "70",
+                "x": 270,
+                "y": 160
+              }
+            ],
+            "edges": [
+              {
+                "from": "40",
+                "to": "20"
+              },
+              {
+                "from": "40",
+                "to": "60"
+              },
+              {
+                "from": "20",
+                "to": "10"
+              },
+              {
+                "from": "20",
+                "to": "30"
+              },
+              {
+                "from": "60",
+                "to": "50"
+              },
+              {
+                "from": "60",
+                "to": "70"
+              }
+            ]
+          },
+          "answerTargetId": "30"
+        },
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Checking one new slot against a balanced BST of n reservations: find two neighbors, compare. What is the time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)"
+          ],
+          "answer": "O(log n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.5"
+        },
+        {
+          "sectionId": "10.1"
+        }
+      ],
+      "tags": [
+        "calendar",
+        "intervals",
+        "ordered-set"
+      ]
+    }
+  ]
+}
