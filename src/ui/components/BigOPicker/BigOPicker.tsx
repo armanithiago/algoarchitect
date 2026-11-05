@@ -131,7 +131,11 @@ export function BigOPicker({ labelledBy, choices, selected, verdict = null, onSe
               />
             ) : null}
             <span aria-hidden="true">
-              <Complexity value={c} size="mono-lg" className={state === "dimmed" ? "text-fg-muted" : undefined} />
+              <Complexity
+                value={c}
+                size="mono-lg"
+                className={state === "dimmed" ? "text-fg-muted" : undefined}
+              />
             </span>
           </button>
         );

@@ -54,7 +54,9 @@ describe("BigOPicker", () => {
   it("has 48 px rows, a 2 px border and one tab stop", () => {
     render(<Harness />);
     const radios = screen.getAllByRole("radio");
-    expect(radios.every((r) => r.classList.contains("min-h-12") && r.classList.contains("border-2"))).toBe(true);
+    expect(radios.every((r) => r.classList.contains("min-h-12") && r.classList.contains("border-2"))).toBe(
+      true,
+    );
     expect(radios.map((r) => r.getAttribute("tabindex"))).toEqual(["0", "-1", "-1", "-1", "-1", "-1"]);
   });
 
@@ -80,7 +82,14 @@ describe("BigOPicker", () => {
     const user = userEvent.setup();
     render(<Harness />);
     await user.click(screen.getByRole("radio", { name: "O of n" }));
-    expect(screen.getAllByRole("radio").map((r) => r.getAttribute("tabindex"))).toEqual(["-1", "-1", "0", "-1", "-1", "-1"]);
+    expect(screen.getAllByRole("radio").map((r) => r.getAttribute("tabindex"))).toEqual([
+      "-1",
+      "-1",
+      "0",
+      "-1",
+      "-1",
+      "-1",
+    ]);
     await user.click(screen.getByRole("radio", { name: "O of n" }));
     expect(screen.getByRole("radio", { name: "O of n" })).toHaveAttribute("data-state", "selected");
   });
