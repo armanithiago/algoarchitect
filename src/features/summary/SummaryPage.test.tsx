@@ -81,7 +81,7 @@ describe("SummaryPage", () => {
     const items = screen.getAllByRole("listitem");
     expect(items).toHaveLength(3);
     expect(items[0]).toHaveTextContent("Consistent hashing, Hashing & Heaps, correct");
-    expect(items[1]).toHaveTextContent("BFS, Graphs & Routing, missed");
+    expect(items[1]).toHaveTextContent("Breadth-first search, Graphs & Routing, missed");
     expect(items[1]).toHaveAttribute("data-result", "missed");
     expect(items[1]!.querySelector("svg")).not.toBeNull();
     expect(items[1]!.querySelector('span[aria-hidden="true"].rounded-full')).not.toBeNull();

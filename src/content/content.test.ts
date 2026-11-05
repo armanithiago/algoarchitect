@@ -5,6 +5,7 @@
 import bundle from "./scenarios.v1.json";
 import { checkBundle, formatIssues } from "@/domain/content/validate";
 import { DOMAINS } from "@/domain/content/schema";
+import { CONCEPT_NAMES } from "@/ui/lib/concept";
 
 describe("scenarios.v1.json", () => {
   const { issues, scenarios } = checkBundle(bundle);
@@ -18,5 +19,10 @@ describe("scenarios.v1.json", () => {
     // Informational: Sprint 2 target is 15 scenarios, 3 per domain. Sprint 3 target is 50, 10 per domain.
     console.info("scenarios per domain:", JSON.stringify(counts), "total:", scenarios.length);
     expect(new Set(scenarios.map((s) => s.id)).size).toBe(scenarios.length);
+  });
+
+  it("has a curated display name for every concept (shown in the session summary)", () => {
+    const missing = [...new Set(scenarios.map((s) => s.concept))].filter((c) => !CONCEPT_NAMES[c]);
+    expect(missing, `add these to CONCEPT_NAMES in src/ui/lib/concept.ts: ${missing.join(", ")}`).toEqual([]);
   });
 });
