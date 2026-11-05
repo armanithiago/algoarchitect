@@ -188,6 +188,16 @@ describe("Session: verdict", () => {
     expect(useSessionStore.getState().step.kind).toBe("feedback");
   });
 
+  it("vibrates [12] for a correct answer", () => {
+    const vibrate = vi.fn();
+    Object.defineProperty(navigator, "vibrate", { value: vibrate, configurable: true });
+    renderSession();
+    fireEvent.click(tile("Consistent hashing"));
+    fireEvent.click(screen.getByRole("button", { name: "Check" }));
+    expect(vibrate).toHaveBeenCalledWith([12]);
+    Reflect.deleteProperty(navigator, "vibrate");
+  });
+
   it("vibrates [12] / [24,60,24] when supported and haptics are on, and not when off", () => {
     const vibrate = vi.fn();
     Object.defineProperty(navigator, "vibrate", { value: vibrate, configurable: true });
