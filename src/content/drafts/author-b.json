@@ -15,7 +15,11 @@
     "stable-sort": "Stable sort",
     "merge-intervals": "Merge intervals",
     "binary-search-bounds": "Binary search bounds",
-    "binary-search-on-answer": "Binary search on the answer"
+    "binary-search-on-answer": "Binary search on the answer",
+    "hash-set-dedup": "Hash set dedup",
+    "complement-lookup": "Complement lookup",
+    "lru-cache": "LRU cache",
+    "prefix-sum-hashmap": "Prefix sum + hash map"
   },
   "scenarios": [
     {
@@ -1495,6 +1499,320 @@
       "tags": [
         "parametric-search",
         "capacity-planning"
+      ]
+    },
+    {
+      "id": "hashing-007",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "hash-set-dedup",
+      "difficulty": 1,
+      "title": "Webhook retry dedup",
+      "prompt": "A payments webhook retries on timeouts, so the same event ID can arrive several times. The handler must process each ID once, and must decide in constant time whether an ID has been seen before.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Hash set of seen IDs",
+          "rationale": "Add reports whether the ID was already present, so each check is O(1) on average."
+        },
+        {
+          "id": "b",
+          "label": "List, scan before insert",
+          "rationale": "Each check scans every earlier ID in O(n), so total work grows as O(n^2)."
+        },
+        {
+          "id": "c",
+          "label": "Sort IDs, compare neighbors",
+          "rationale": "Needs the whole batch up front and costs O(n log n), but events arrive one at a time."
+        },
+        {
+          "id": "d",
+          "label": "Binary search a sorted list",
+          "rationale": "O(log n) to find an ID, but every insert shifts O(n) items to keep the list sorted."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "A hash set answers 'seen before?' in O(1) on average: Add returns false when the ID is already present, so the handler skips it. Memory grows with the number of distinct IDs, so expire old ones in production. Lookups degrade to O(n) only under pathological collisions.",
+      "complexity": {
+        "time": "O(1)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Checking n incoming event IDs against a hash set, one lookup each. What is the total expected time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "idempotency",
+        "payments",
+        "dedup"
+      ]
+    },
+    {
+      "id": "hashing-008",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "complement-lookup",
+      "difficulty": 1,
+      "title": "Refund pair matching",
+      "prompt": "Finance must find two ledger entries, out of a day's 100k, that add up to a refund amount. Checking every pair is too slow. Find a matching pair in a single pass over the entries.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Check every pair",
+          "rationale": "Nested loops cost O(n^2), about 5 billion checks for 100k entries."
+        },
+        {
+          "id": "b",
+          "label": "Hash map of seen amounts",
+          "rationale": "For each amount, look up target - amount among earlier entries: one pass, O(1) average per lookup."
+        },
+        {
+          "id": "c",
+          "label": "Sort, then binary search",
+          "rationale": "Sorting costs O(n log n) first, and it is not the single pass the job needs."
+        },
+        {
+          "id": "d",
+          "label": "Max-heap of amounts",
+          "rationale": "A heap exposes only its largest entry; it cannot look up a specific partner amount."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "For each amount a, the partner must equal target - a. A hash map of amounts already seen answers 'is the partner here?' in O(1) on average, so a single pass finds a pair in O(n) time and O(n) space. It trades memory for the O(n^2) cost of testing every pair.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "One pass over n entries, one hash lookup each. What is the expected time to find a pair?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Target 9. Scan left to right, looking for each value's partner among earlier values. Tap the cell where a partner is first found.",
+          "visual": {
+            "kind": "array",
+            "caption": "Ledger amounts, scan order",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "3"
+              },
+              {
+                "id": "c1",
+                "label": "8"
+              },
+              {
+                "id": "c2",
+                "label": "5"
+              },
+              {
+                "id": "c3",
+                "label": "6"
+              },
+              {
+                "id": "c4",
+                "label": "4"
+              }
+            ]
+          },
+          "answerTargetId": "c3"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "two-sum",
+        "ledger"
+      ]
+    },
+    {
+      "id": "hashing-009",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "lru-cache",
+      "difficulty": 2,
+      "title": "Profile cache eviction",
+      "prompt": "A profile service caches 100k recent users in memory. Every read and write must run in constant time, and when the cache is full it evicts the user untouched for the longest time.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Hash map only",
+          "rationale": "O(1) lookup, but no record of recency, so finding the eviction victim scans every entry."
+        },
+        {
+          "id": "b",
+          "label": "Array sorted by last use",
+          "rationale": "The victim is easy to find, but moving an entry to the front on each read costs O(n)."
+        },
+        {
+          "id": "c",
+          "label": "Hash map + linked list",
+          "rationale": "The map finds a node in O(1); the list moves it to the front and drops the tail in O(1)."
+        },
+        {
+          "id": "d",
+          "label": "Min-heap on last-used time",
+          "rationale": "Eviction is quick, but every read must update an entry's priority, O(log n) per access."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "An LRU cache needs two things in O(1): find an entry by key and track recency order. A hash map points straight at nodes of a doubly linked list ordered by last use. A hit unlinks the node and moves it to the head; an eviction drops the tail node and its map entry. The list is doubly linked so a node can be unlinked without a scan.",
+      "complexity": {
+        "time": "O(1)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "LRU cache of n entries built from a hash map plus a doubly linked list. What is the average time of one get or put?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)"
+          ],
+          "answer": "O(1)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "2.9"
+        },
+        {
+          "sectionId": "2.2"
+        }
+      ],
+      "tags": [
+        "caching",
+        "eviction",
+        "lru"
+      ]
+    },
+    {
+      "id": "hashing-010",
+      "version": 1,
+      "domain": "hashing",
+      "concept": "prefix-sum-hashmap",
+      "difficulty": 3,
+      "title": "Cash-flow window finder",
+      "prompt": "Finance has 1M daily net cash-flow figures, positive or negative. Count the contiguous day ranges whose total equals exactly a target T. A sliding window fails here, and testing every range is too slow.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Two-pointer sliding window",
+          "rationale": "Moving pointers by comparing the sum to T needs non-negative values; negatives break it."
+        },
+        {
+          "id": "b",
+          "label": "Test every start and end",
+          "rationale": "Even with a running sum per start, that is O(n^2) ranges, far too slow for 1M days."
+        },
+        {
+          "id": "c",
+          "label": "Sort values, then scan",
+          "rationale": "Sorting destroys the day order, and the ranges must be contiguous days."
+        },
+        {
+          "id": "d",
+          "label": "Prefix sums + hash map",
+          "rationale": "Counts earlier prefix sums equal to (current prefix - T) in O(1): one pass, O(n) time."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "Let P[i] be the running total after day i. A range sums to T exactly when P[j] - P[i] = T, so at each day j count the earlier prefixes equal to P[j] - T. A hash map from prefix value to count answers that in O(1) on average: one pass, O(n) time, O(n) space. Seed the map with 0 for ranges that start on day one.",
+      "complexity": {
+        "time": "O(n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Prefix sums with a hash map over n daily figures, one lookup per day. What is the expected time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Target 3. Scanning left to right, tap the first day on which some range ending there sums to 3.",
+          "visual": {
+            "kind": "array",
+            "caption": "Daily net cash flow",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "1"
+              },
+              {
+                "id": "c1",
+                "label": "1"
+              },
+              {
+                "id": "c2",
+                "label": "2"
+              },
+              {
+                "id": "c3",
+                "label": "-2"
+              },
+              {
+                "id": "c4",
+                "label": "3"
+              }
+            ]
+          },
+          "answerTargetId": "c2"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "5.4"
+        },
+        {
+          "sectionId": "2.3"
+        }
+      ],
+      "tags": [
+        "prefix-sum",
+        "finance",
+        "subarray"
       ]
     }
   ]
