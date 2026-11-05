@@ -8,7 +8,14 @@
     "bst-minimum": "BST minimum lookup",
     "bfs-shallowest-match": "BFS shallowest match",
     "lowest-common-ancestor": "Lowest common ancestor",
-    "ordered-interval-index": "Ordered interval index"
+    "ordered-interval-index": "Ordered interval index",
+    "counting-sort": "Counting sort",
+    "insertion-sort": "Insertion sort",
+    "merge-sorted-lists": "Merging sorted lists",
+    "stable-sort": "Stable sort",
+    "merge-intervals": "Merge intervals",
+    "binary-search-bounds": "Binary search bounds",
+    "binary-search-on-answer": "Binary search on the answer"
   },
   "scenarios": [
     {
@@ -946,6 +953,548 @@
         "calendar",
         "intervals",
         "ordered-set"
+      ]
+    },
+    {
+      "id": "sorting-004",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "counting-sort",
+      "difficulty": 1,
+      "title": "Sort reviews by stars",
+      "prompt": "A store ranks 50M product reviews by star rating, an integer from 1 to 5, for a nightly report. The values come from a tiny fixed range, and the job should run in linear time.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Counting sort",
+          "rationale": "Tallies each of the 5 values, then writes them out in order: O(n + k) with k = 5 and no comparisons."
+        },
+        {
+          "id": "b",
+          "label": "Quicksort",
+          "rationale": "Averages O(n log n) and ignores that only 5 distinct values exist."
+        },
+        {
+          "id": "c",
+          "label": "Merge sort",
+          "rationale": "Always O(n log n) and needs O(n) extra space, more work than a 5-value range requires."
+        },
+        {
+          "id": "d",
+          "label": "Insertion sort",
+          "rationale": "O(n^2) on average, hopeless at 50M items."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "When keys are integers in a known range of size k, counting sort tallies each value and rebuilds the output from the counts: O(n + k) time and O(k) counters. With k = 5 that is effectively linear, beating the O(n log n) bound that applies to comparison sorts. It stops paying off when k is far larger than n.",
+      "complexity": {
+        "time": "O(n + k)",
+        "space": "O(k)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Counting sort on n reviews that have 5 possible ratings. What is the time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "9.3"
+        },
+        {
+          "sectionId": "9.4"
+        }
+      ],
+      "tags": [
+        "ratings",
+        "non-comparison"
+      ]
+    },
+    {
+      "id": "sorting-005",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "insertion-sort",
+      "difficulty": 1,
+      "title": "Live leaderboard re-sort",
+      "prompt": "A game screen re-sorts a 200-row leaderboard after every score update. The list was already sorted, and each update moves only a few rows. The sort should cost almost nothing when little has changed.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Quicksort",
+          "rationale": "Averages O(n log n) however sorted the input is, and a naive pivot degrades to O(n^2) on sorted data."
+        },
+        {
+          "id": "b",
+          "label": "Heapsort",
+          "rationale": "Always O(n log n): it rebuilds a heap and never exploits the existing order."
+        },
+        {
+          "id": "c",
+          "label": "Insertion sort",
+          "rationale": "Cost is about n plus the number of out-of-order pairs, so a nearly sorted list takes close to linear time."
+        },
+        {
+          "id": "d",
+          "label": "Selection sort",
+          "rationale": "Always O(n^2): it scans the unsorted part for the minimum even when everything is in place."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Insertion sort shifts each element left only as far as it is out of place, so its cost is O(n + d) for d out-of-order pairs. A nearly sorted list finishes in close to linear time, and the sort is stable and in-place. On random input it is O(n^2), so use it only when the disorder is small.",
+      "complexity": {
+        "time": "O(n + d)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Insertion sort on a list of n rows that is already sorted. What is the time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "9.4"
+        },
+        {
+          "sectionId": "9.2"
+        }
+      ],
+      "tags": [
+        "leaderboard",
+        "nearly-sorted"
+      ]
+    },
+    {
+      "id": "sorting-006",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "merge-sorted-lists",
+      "difficulty": 1,
+      "title": "Merge two sorted feeds",
+      "prompt": "Two services each return their latest 10,000 events, already sorted by timestamp. Produce one sorted timeline for the dashboard, and do not throw away the order the inputs already have.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Concatenate, then full sort",
+          "rationale": "Correct output, but O(n log n) work that ignores both lists being sorted already."
+        },
+        {
+          "id": "b",
+          "label": "Two-pointer merge",
+          "rationale": "Compare the two heads, emit the smaller, advance that list: one pass, O(n + m)."
+        },
+        {
+          "id": "c",
+          "label": "Insert each into a BST",
+          "rationale": "Rebuilds the order from scratch at O(log n) per event, plus an in-order walk."
+        },
+        {
+          "id": "d",
+          "label": "Hash set, then sort keys",
+          "rationale": "Hashing discards order and duplicates, and the final sort costs O(n log n) anyway."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Both inputs are already sorted, so keep one pointer per list, emit the smaller head, and advance that pointer. Every event is touched once: O(n + m) time and O(n + m) for the output. This is the merge step inside merge sort. On equal timestamps, take the first list's event first to stay stable.",
+      "complexity": {
+        "time": "O(n + m)",
+        "space": "O(n + m)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Two-pointer merge of two sorted lists of n events each. What is the time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "9.2"
+        }
+      ],
+      "tags": [
+        "merge",
+        "events",
+        "timeline"
+      ]
+    },
+    {
+      "id": "sorting-007",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "stable-sort",
+      "difficulty": 2,
+      "title": "Multi-column table sort",
+      "prompt": "A table is sorted by name, then the user clicks the Team column. Rows on the same team must stay in name order, so the second sort cannot reshuffle ties. Pick the sort for the click handler.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Quicksort",
+          "rationale": "Swaps distant elements, so equal keys can change relative order. It is not stable."
+        },
+        {
+          "id": "b",
+          "label": "Heapsort",
+          "rationale": "In-place and O(n log n), but not stable: equal keys can swap places."
+        },
+        {
+          "id": "c",
+          "label": "Selection sort",
+          "rationale": "Its long-distance swaps are not stable, and it costs O(n^2) on top."
+        },
+        {
+          "id": "d",
+          "label": "Merge sort",
+          "rationale": "Equal keys keep their input order when the merge takes the left item on ties, so name order survives inside each team."
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "A stable sort keeps equal keys in their original relative order, so sorting by team after name leaves each team's rows in name order. Merge sort is stable when ties take the left item, at O(n log n) time and O(n) extra space. Quicksort and heapsort are not stable; TimSort-based library sorts are.",
+      "complexity": {
+        "time": "O(n log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "space",
+          "question": "Merge sort on n rows, using a temporary array for merging. How much extra space does it need?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)"
+          ],
+          "answer": "O(n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Rows are in name order. Stable sort by team (A before B). Which cell is written to the output first?",
+          "visual": {
+            "kind": "array",
+            "caption": "Cells show team-name, in name order",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "B-a"
+              },
+              {
+                "id": "c1",
+                "label": "A-b"
+              },
+              {
+                "id": "c2",
+                "label": "B-c"
+              },
+              {
+                "id": "c3",
+                "label": "A-d"
+              },
+              {
+                "id": "c4",
+                "label": "B-e"
+              },
+              {
+                "id": "c5",
+                "label": "A-f"
+              }
+            ]
+          },
+          "answerTargetId": "c1"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "9.2"
+        },
+        {
+          "sectionId": "9.4"
+        }
+      ],
+      "tags": [
+        "stability",
+        "ui-tables"
+      ]
+    },
+    {
+      "id": "sorting-008",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "merge-intervals",
+      "difficulty": 2,
+      "title": "Free/busy calendar merge",
+      "prompt": "A scheduling tool pulls busy blocks from several calendars as unsorted start-end pairs. Overlapping blocks must collapse into single busy periods so the free slots between them can be shown.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Sort by start, then sweep",
+          "rationale": "After sorting by start, only the last merged block can overlap the next one, so one pass merges everything."
+        },
+        {
+          "id": "b",
+          "label": "Compare every pair of blocks",
+          "rationale": "Finds every overlap but costs O(n^2) comparisons, and chains of overlaps are awkward to merge."
+        },
+        {
+          "id": "c",
+          "label": "Sort by duration",
+          "rationale": "Length says nothing about position, so neighbors in that order need not touch."
+        },
+        {
+          "id": "d",
+          "label": "Hash map keyed by start",
+          "rationale": "An exact start lookup does not reveal overlaps, which depend on ranges, and a hash map has no order."
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Sort the blocks by start time, then sweep once: if the next block starts at or before the current block's end, extend the end to the larger of the two ends, otherwise begin a new period. The sort dominates: O(n log n) time, O(n) for the output. Free slots are the gaps between merged periods.",
+      "complexity": {
+        "time": "O(n log n)",
+        "space": "O(n)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Merging n unsorted intervals: sort by start, then one sweep. What is the time?",
+          "choices": [
+            "O(log n)",
+            "O(n)",
+            "O(n log n)",
+            "O(n^2)"
+          ],
+          "answer": "O(n log n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Blocks arrive unsorted. After sorting by start time, which block does the sweep process first?",
+          "visual": {
+            "kind": "array",
+            "caption": "Busy blocks (hours), arrival order",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "5-8"
+              },
+              {
+                "id": "c1",
+                "label": "1-3"
+              },
+              {
+                "id": "c2",
+                "label": "8-10"
+              },
+              {
+                "id": "c3",
+                "label": "2-6"
+              }
+            ]
+          },
+          "answerTargetId": "c1"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "10.2"
+        },
+        {
+          "sectionId": "10.1"
+        }
+      ],
+      "tags": [
+        "calendar",
+        "intervals",
+        "scheduling"
+      ]
+    },
+    {
+      "id": "sorting-009",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "binary-search-bounds",
+      "difficulty": 2,
+      "title": "Events in a time window",
+      "prompt": "A log store keeps 100M events sorted by timestamp, and many events share a timestamp. An API must count events between a start and an end time without reading the rows in between.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Scan the whole window",
+          "rationale": "Reads every row inside the window, so cost tracks window size instead of staying logarithmic."
+        },
+        {
+          "id": "b",
+          "label": "Binary search: any match",
+          "rationale": "Plain binary search stops at some equal timestamp, not the first or last, so duplicates break the count."
+        },
+        {
+          "id": "c",
+          "label": "Binary search both bounds",
+          "rationale": "Find the first index at or after start and the first after end, each in O(log n). The count is their difference."
+        },
+        {
+          "id": "d",
+          "label": "Hash map of timestamp counts",
+          "rationale": "Counts exact timestamps only. A range would mean summing every key in between."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "The log is sorted, so run binary search twice: the lower bound (first index with timestamp >= start) and the upper bound (first index with timestamp > end). The window holds upper - lower rows. Each search is O(log n) and the window is never read. Bound variants keep searching after a match so duplicates cannot hide the edge.",
+      "complexity": {
+        "time": "O(log n)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Counting events in a time window of a sorted log with two bound searches over n events. What is the time?",
+          "choices": [
+            "O(1)",
+            "O(log n)",
+            "O(n)",
+            "O(n log n)"
+          ],
+          "answer": "O(log n)"
+        },
+        {
+          "type": "traceFirstStep",
+          "question": "Find the first 5. Use mid = floor((lo + hi) / 2). Which cell does the search probe first?",
+          "visual": {
+            "kind": "array",
+            "caption": "Sorted timestamps (minutes)",
+            "cells": [
+              {
+                "id": "c0",
+                "label": "1"
+              },
+              {
+                "id": "c1",
+                "label": "3"
+              },
+              {
+                "id": "c2",
+                "label": "5"
+              },
+              {
+                "id": "c3",
+                "label": "5"
+              },
+              {
+                "id": "c4",
+                "label": "5"
+              },
+              {
+                "id": "c5",
+                "label": "5"
+              },
+              {
+                "id": "c6",
+                "label": "8"
+              },
+              {
+                "id": "c7",
+                "label": "9"
+              }
+            ]
+          },
+          "answerTargetId": "c3"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "8.3"
+        }
+      ],
+      "tags": [
+        "lower-bound",
+        "range-query",
+        "logs"
+      ]
+    },
+    {
+      "id": "sorting-010",
+      "version": 1,
+      "domain": "sorting",
+      "concept": "binary-search-on-answer",
+      "difficulty": 3,
+      "title": "Smallest shift length",
+      "prompt": "A render farm must run 50,000 jobs in their given order, split into at most 8 consecutive shifts. Each job has a known runtime and cannot be split. Find the smallest shift length that still fits every job.",
+      "options": [
+        {
+          "id": "a",
+          "label": "Try every length up to total",
+          "rationale": "Correct, but it tests up to the sum of all runtimes as candidates, each costing O(n)."
+        },
+        {
+          "id": "b",
+          "label": "Binary search on the length",
+          "rationale": "If length L fits, any longer length fits too. Binary search L and test each guess with an O(n) greedy pass."
+        },
+        {
+          "id": "c",
+          "label": "Total runtime divided by 8",
+          "rationale": "The average is only a lower bound. Jobs are ordered and indivisible, so the true minimum can be higher."
+        },
+        {
+          "id": "d",
+          "label": "Binary search the job list",
+          "rationale": "Runtimes are unsorted and the target is a length, not an element, so there is no sorted array to halve."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "The answer is a number in a known range, from the longest single job up to the sum of all jobs. A greedy pass packs jobs in order and opens a new shift when the next job would overflow; that tells in O(n) whether a length fits, and feasibility only improves as the length grows. So binary search the answer: O(n log W) for range size W.",
+      "complexity": {
+        "time": "O(n log W)",
+        "space": "O(1)"
+      },
+      "validations": [
+        {
+          "type": "bigO",
+          "measure": "time",
+          "question": "Binary search over shift lengths up to total runtime W, with an O(n) feasibility check per guess. What is the time?",
+          "choices": [
+            "O(log W)",
+            "O(n)",
+            "O(n log W)",
+            "O(n W)"
+          ],
+          "answer": "O(n log W)"
+        }
+      ],
+      "study": [
+        {
+          "sectionId": "8.4"
+        }
+      ],
+      "tags": [
+        "parametric-search",
+        "capacity-planning"
       ]
     }
   ]
