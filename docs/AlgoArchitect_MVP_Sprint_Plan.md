@@ -21,17 +21,24 @@
 | Study content | The [Patterns Handbook](https://github.com/armanithiago/patterns-handbook) (30 chapters + 4 appendices), converted at build time and **bundled offline** |
 | Hosting | Static hosting with HTTPS (Netlify / Vercel / GitHub Pages / Cloudflare Pages) |
 
-### 1.0 Progress (updated 2026-11-05)
+### 1.0 Progress (updated 2026-11-05, after Sprint 3)
 
 | Sprint | Status | Notes |
 |---|---|---|
 | Sprint 0 | **Partly done** | Done: repo, tooling, CI (E1-01, E1-02), design tokens and base components (E1-03, no Storybook yet), wireframes (E1-04, in the design system and the demo), content schema and validator (E1-05). Not done: ADRs (E1-07). The 5 pilot scenarios (E1-06) were folded into Sprint 2 |
 | Sprint 1 | **Done** | E2-01 to E2-09 merged and verified in a real browser (offline reload, manifest, icons, thumb rule). Not verified: installing on a real phone |
 | Sprint 2 | **Done** | E3-01 to E3-07 and E3-13 part 1 merged. Verified in the production build, **offline**: a 10-question session across all five domains, 10 attempts saved to IndexedDB, XP awarded once. 15 scenarios, 302 tests. Main bundle 146.5 kB gzipped (limit 200) |
-| Sprint 3 | Not started | Mini-validations (Big-O picker, trace first step, trace order UI) and scenarios 16-50. The schema, the algorithm checker and 12 validations already exist in the content |
+| Sprint 3 | **Done** | E3-10 to E3-12 and E3-13 to E3-15 merged, plus the trace-order validation (E6-07 UI) pulled forward from Sprint 5. **50 scenarios**, 10 per domain, difficulty 4/4/2 in each, 40 Big-O + 15 first-step + 10 trace-order validations. Verified in the production build, offline: a full session through the real UI with all three validation types and wrong answers, 10 attempts saved with their validation results, XP computed independently (120) equal to the persisted XP. 425 tests |
+
+**Sprint 3 notes**
+- The peer review (E3-15) was a by-hand technical review of all 35 new scenarios by the orchestrator. It found two duplicate scenarios (replaced with frequency counting and the two-heap running median) and two ambiguous binary-search questions (now state `lo = 0`, `hi = last index`, matching the handbook). A second human review is still recommended before launch.
+- A flaky test (a fixed 20 ms wait for IndexedDB writes) failed on CI twice; fixed with `flushAttemptWrites()`.
 
 **Known gaps carried forward**
-- Not built: resume an interrupted session (E3-08), system Back opening the end-session confirmation, the Study button (Sprint 5).
+- On 320 px phones the trace hit areas of `trees-002` overlap by under 1 px: the 52-unit spacing rule gives 42.6 px there. Raise the rule to about 59 units or reduce the card padding at 320 px.
+- Trace-order verdict text (`Order: Y B D A E C`) and the wrong-answer wording for `traceFirstStep` were written from the design doc's copy rules; they have not been reviewed by a person.
+- CI uses `actions/checkout@v4` and `setup-node@v4` on a deprecated Node 20 runtime (a warning today).
+- Not built: resume an interrupted session (E3-08), system Back opening the end-session confirmation, the Study button (Sprint 5), spaced repetition and streaks (Sprint 4).
 - The `[X]` close button is not reachable while the explanation sheet is open (Esc and Next scenario are the exits).
 - Not verified: real iPhone and Android installation, haptics on a real device, VoiceOver and TalkBack, the content check on the full 50 scenarios, the GitHub Actions run after the latest pushes.
 - Content: B-trees have no scenario because the handbook has no B-tree section.
