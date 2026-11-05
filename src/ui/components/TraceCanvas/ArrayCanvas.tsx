@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import { cx } from "@/ui/lib/cx";
 import { targetName, type TargetInfo, type TargetState } from "./model";
@@ -58,16 +59,32 @@ function CellBadge({ info, mode }: { info: TargetInfo; mode: ViewProps["mode"] }
  * The cells are the buttons themselves, so there is no separate hit layer to drift.
  */
 export function ArrayCanvas({ mode, targets, infos, descs, readOnly, onTap, activeId, onActive, registerRef }: ViewProps) {
+  const box = useRef<HTMLDivElement>(null);
+  const [cols, setCols] = useState(6);
+  // Six per row; five when the box is narrower than 6 x 48 px (a 320 px phone), so no cell drops under 48 px.
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const measure = () => {
+      const w = el.getBoundingClientRect().width;
+      setCols(w > 0 && w < 6 * 48 ? 5 : 6);
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   return (
-    <div className="@container w-full" data-testid="trace-canvas-box">
-      <div className="grid grid-cols-5 gap-y-1 pr-px @min-[18rem]:grid-cols-6">
+    <div ref={box} className="w-full" data-testid="trace-canvas-box">
+      <div className="grid gap-y-1" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }} data-cols={cols}>
         {targets.map((t, i) => {
           const info = infos.get(t.id);
           if (!info) return null;
           const base = descs.get(t.id)?.name ?? t.label;
           const frame = frames[info.state];
           return (
-            <div key={t.id} className="-mr-px flex min-w-0 flex-col" data-array-cell="">
+            <div key={t.id} className="flex min-w-0 flex-col" data-array-cell="">
               <span aria-hidden="true" className="text-center font-mono text-mono-sm text-fg-muted">
                 {i}
               </span>
@@ -85,7 +102,9 @@ export function ArrayCanvas({ mode, targets, infos, descs, readOnly, onTap, acti
                 onClick={() => onTap(t.id)}
                 onFocus={() => onActive(t.id)}
                 className={cx(
-                  "relative h-12 min-w-12 touch-manipulation border border-line-strong font-mono text-mono-node focus-visible:z-20 focus-visible:focus-ring-inset",
+                  "relative h-12 min-w-12 touch-manipulation border-y border-l border-line-strong",
+                  ((i + 1) % cols === 0 || i === targets.length - 1) && "border-r",
+                  " font-mono text-mono-node focus-visible:z-20 focus-visible:focus-ring-inset",
                   "transition-[background-color] duration-(--duration-fast) ease-standard",
                   info.state === "dimmed" ? "text-fg-muted" : "text-fg",
                   readOnly || info.locked ? "cursor-default" : "cursor-pointer",

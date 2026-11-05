@@ -106,7 +106,7 @@ export function TraceCanvas({
       data-view={view}
       onKeyDown={onKeyDown}
     >
-      <div className="-mr-1 flex min-h-12 items-center justify-between gap-2">
+      <div className="-mr-1 flex min-h-10 items-center justify-between gap-2">
         <span className="min-w-0 text-caption text-fg-muted">{visual.caption}</span>
         <span className="flex shrink-0 items-center">
           {showUndo ? (
@@ -143,7 +143,7 @@ export function TraceCanvas({
       </div>
       <p aria-live="polite" className="pt-2 text-caption text-fg-muted">
         {readout.lead}
-        {readout.mono !== null ? <span className="font-mono text-mono-sm text-fg">{readout.mono}</span> : null}
+        {readout.mono !== null ? <span className="font-mono [font-variant-ligatures:none]">{readout.mono}</span> : null}
         {readout.tail}
       </p>
     </section>

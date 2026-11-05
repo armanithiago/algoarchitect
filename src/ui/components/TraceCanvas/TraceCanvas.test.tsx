@@ -245,7 +245,7 @@ describe("TraceCanvas · arrays", () => {
     render(<Harness f={f} />);
     const cells = document.querySelectorAll("[data-array-cell]");
     expect(cells).toHaveLength(9);
-    expect(document.querySelector(".grid")!.className).toContain("@min-[18rem]:grid-cols-6");
+    expect(document.querySelector("[data-cols]")).toHaveAttribute("data-cols", "6");
     expect(cells[4]!.textContent).toContain("4"); // index label
     expect(hit("c5")).toHaveAccessibleName("Index 5 · value 38");
     expect(hit("c4")).toHaveClass("h-12");
