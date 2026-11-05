@@ -1,9 +1,13 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Play, TriangleAlert } from "lucide-react";
 import { levelProgress } from "@/domain/xp/levels";
 import { useSkeleton } from "@/hooks/useSkeleton";
 import { useProfileStore } from "@/stores/profile";
+import { useSessionStore } from "@/stores/session";
 import { Button } from "@/ui/components/Button";
 import { Card } from "@/ui/components/Card";
+import { EmptyState } from "@/ui/components/EmptyState";
 import { Skeleton } from "@/ui/components/Skeleton";
 import { XPBar } from "@/ui/components/XPBar";
 
@@ -17,13 +21,10 @@ function todayLabel(): string {
   return new Date().toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
-/**
- * TODO(Sprint 2): start a session (E3 session flow). Sessions don't exist yet, so this
- * intentionally does nothing. Do not invent a flow here.
- */
-function handleStartSession(): void {
-  // intentionally empty until Sprint 2
-}
+const LOAD_ERROR_COPY = "Couldn't load scenarios. Reload to try again.";
+
+/** The session store may report a scenario-loading failure as `loadError` (set by the real store). */
+const selectLoadError = (s: object): boolean => Boolean((s as { loadError?: unknown }).loadError);
 
 export function HomePage() {
   const hydrated = useProfileStore((s) => s.hydrated);
@@ -31,6 +32,35 @@ export function HomePage() {
   const xp = useProfileStore((s) => s.xp);
   const streakCount = useProfileStore((s) => s.streakCount);
   const { showSkeleton, painted } = useSkeleton(!hydrated);
+  const navigate = useNavigate();
+  const storeLoadError = useSessionStore(selectLoadError);
+  const [starting, setStarting] = useState(false);
+  const [startFailed, setStartFailed] = useState(false);
+  const loadFailed = startFailed || storeLoadError;
+
+  async function handleStartSession(): Promise<void> {
+    if (starting) return;
+    // Leaving mid-session and coming back resumes it: the state lives in the store.
+    const kind = useSessionStore.getState().step.kind;
+    if (kind === "question" || kind === "feedback") {
+      navigate("/session");
+      return;
+    }
+    setStarting(true);
+    setStartFailed(false);
+    try {
+      await useSessionStore.getState().start();
+    } catch {
+      setStartFailed(true);
+    }
+    setStarting(false);
+    const after = useSessionStore.getState();
+    if (selectLoadError(after) || after.step.kind === "idle") {
+      setStartFailed(true);
+      return;
+    }
+    navigate("/session");
+  }
 
   const firstRun = xp === 0 && streakCount === 0;
   const progress = levelProgress(xp);
@@ -89,23 +119,33 @@ export function HomePage() {
         </Card>
       </div>
 
-      {/* Pinned in the thumb zone, directly above the tab bar. Renders at once so nothing jumps. */}
-      <div className="sticky bottom-0 mt-auto bg-canvas py-2">
-        <Button
-          size="lg"
-          disabled={!hydrated}
-          aria-describedby={hydrated ? undefined : "start-hint"}
-          leadingIcon={<Play size={20} aria-hidden="true" />}
-          onClick={handleStartSession}
-        >
-          Start session
-        </Button>
-        {hydrated ? null : (
-          <span id="start-hint" className="sr-only">
-            Loading your progress
-          </span>
-        )}
-      </div>
+      {loadFailed ? (
+        <div className="sticky bottom-0 mt-auto bg-canvas py-2" data-testid="load-error">
+          <EmptyState title={LOAD_ERROR_COPY} className="py-4" />
+          <Button size="lg" onClick={() => window.location.reload()}>
+            Reload
+          </Button>
+        </div>
+      ) : (
+        /* Pinned in the thumb zone, directly above the tab bar. Renders at once so nothing jumps. */
+        <div className="sticky bottom-0 mt-auto bg-canvas py-2">
+          <Button
+            size="lg"
+            disabled={!hydrated}
+            loading={starting}
+            aria-describedby={hydrated ? undefined : "start-hint"}
+            leadingIcon={<Play size={20} aria-hidden="true" />}
+            onClick={() => void handleStartSession()}
+          >
+            Start session
+          </Button>
+          {hydrated ? null : (
+            <span id="start-hint" className="sr-only">
+              Loading your progress
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
