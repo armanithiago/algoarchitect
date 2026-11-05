@@ -49,6 +49,12 @@ function persistValidations(i: number, validations: ValidationResult[]): void {
   });
 }
 
+/** Resolves when every attempt write queued so far has finished. Lets callers (and tests) wait deterministically
+ *  instead of sleeping. Never rejects: repository writes already swallow their errors. */
+export async function flushAttemptWrites(): Promise<void> {
+  await Promise.all([...rowIds.values()].map((e) => e.chain.catch(() => undefined)));
+}
+
 const setToasts = (suspended: boolean) => useToastStore.getState().setSuspended(suspended);
 
 export const useSessionStore = create<Store>()((set, get) => {

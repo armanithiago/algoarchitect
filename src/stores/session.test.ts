@@ -6,11 +6,13 @@ import type { Validation } from "@/domain/content/schema";
 import { expectedTargets } from "@/domain/session/validation";
 import { SESSION_SIZE, XP_MATCH_CORRECT, XP_SESSION_COMPLETE, XP_VALIDATION_CORRECT, type ValidationAnswer } from "@/domain/session/types";
 import { initialProfile, useProfileStore } from "./profile";
-import { resetSessionForTests, useSessionStore } from "./session";
+import { flushAttemptWrites, resetSessionForTests, useSessionStore } from "./session";
 import { useToastStore } from "@/ui/components/Toast/useToastStore";
 
 const s = () => useSessionStore.getState();
-const flush = () => new Promise((r) => setTimeout(r, 20));
+const flush = async () => {
+  await flushAttemptWrites();
+};
 
 async function wipe() {
   closeDb();
