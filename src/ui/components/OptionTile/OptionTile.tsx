@@ -16,7 +16,8 @@ export interface OptionTileProps {
   id?: string;
 }
 
-const states: Record<OptionTileState, string> = {
+/** Surface classes per state; shared with BigOPicker so both read identically (design system §7.3). */
+export const optionTileStates: Record<OptionTileState, string> = {
   default:
     "border-line-subtle bg-surface-raised text-fg active:border-line active:bg-surface-pressed " +
     "can-hover:hover:border-line can-hover:hover:bg-surface-hover",
@@ -75,7 +76,7 @@ export const OptionTile = forwardRef<HTMLButtonElement, OptionTileProps>(functio
         "transition-[background-color,border-color,color] duration-(--duration-fast) ease-standard",
         "motion-ok:active:scale-[0.99]",
         readOnly && "cursor-default",
-        states[state],
+        optionTileStates[state],
       )}
     >
       <span
