@@ -75,7 +75,7 @@ describe("check", () => {
     const s = checked("b", T0 + 1234);
     expect(s.step).toEqual({ kind: "question", selectedOptionId: "b", checked: true });
     expect(s.results).toEqual([
-      { scenarioId: "dp-001", concept: "concept-1", domain: "dp", pickedOptionId: "b", correct: true, xp: XP_MATCH_CORRECT, durationMs: 1234 },
+      { scenarioId: "dp-001", concept: "concept-1", domain: "dp", pickedOptionId: "b", correct: true, xp: XP_MATCH_CORRECT, validations: [], durationMs: 1234 },
     ]);
   });
   it("wrong answer earns no XP", () => {
