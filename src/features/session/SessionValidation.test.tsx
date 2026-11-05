@@ -171,11 +171,14 @@ describe("Validation: Big-O", () => {
 });
 
 describe("Validation: trace first step", () => {
-  it("renders the TraceCanvas (stub in this branch) instead of a picker", async () => {
+  it("renders the real TraceCanvas (a radiogroup of nodes) instead of the Big-O picker", async () => {
     await toValidation(FIRST);
     expect(screen.getByText(/Check 1 of 1 · Trace/)).toBeInTheDocument();
-    expect(document.querySelector("[data-stub='trace-canvas']")).not.toBeNull();
-    expect(screen.queryByRole("radiogroup")).toBeNull();
+    expect(document.querySelector("[data-stub='trace-canvas']")).toBeNull();
+    const nodes = screen.getAllByRole("radio");
+    expect(nodes.length).toBeGreaterThanOrEqual(3);
+    // Trace targets are described by their neighbors; Big-O choices are complexity names.
+    expect(nodes.every((n) => /neighbors|Index|child of/.test(n.getAttribute("aria-label") ?? ""))).toBe(true);
   });
 
   it("Check waits for a target; right: '{label} is the first step.'; wrong: 'The first step is {label}.'", async () => {
