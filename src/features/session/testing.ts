@@ -1,0 +1,100 @@
+/**
+ * TEST HELPER (not imported by app code): drives the UI with a small in-memory implementation of the
+ * SessionStore contract, so screens are tested against the types and not against the real store.
+ */
+import bundle from "@/content/scenarios.v1.json";
+import { ScenarioBundleSchema, type Scenario } from "@/domain/content/schema";
+import {
+  idleSession,
+  XP_MATCH_CORRECT,
+  XP_SESSION_COMPLETE,
+  type SessionItem,
+  type SessionStore,
+} from "@/domain/session/types";
+import { useSessionStore } from "@/stores/session";
+
+export const seedScenarios: Scenario[] = ScenarioBundleSchema.parse(bundle).scenarios;
+
+/** `optionOrder` = authored order unless given (the wrong-pick tests want a known display order). */
+export function makeItems(count: number, order?: string[]): SessionItem[] {
+  return seedScenarios.slice(0, count).map((scenario) => ({
+    scenario,
+    optionOrder: order ?? scenario.options.map((o) => o.id),
+  }));
+}
+
+/** Replaces the store with a working fake of the contract and starts on item 0. */
+export function installFakeSession(items: SessionItem[], opts: { practice?: boolean } = {}): void {
+  const set = useSessionStore.setState;
+  const get = useSessionStore.getState;
+  const actions: Pick<SessionStore, "start" | "select" | "check" | "continueFromVerdict" | "nextScenario" | "end" | "reset"> = {
+    start: async () => {},
+    select: (optionId) => {
+      const s = get().step;
+      if (s.kind === "question" && !s.checked) set({ step: { kind: "question", selectedOptionId: optionId, checked: false } });
+    },
+    check: () => {
+      const s = get().step;
+      if (s.kind !== "question" || s.checked || s.selectedOptionId === null) return;
+      const { scenario } = get().items[get().index]!;
+      const correct = s.selectedOptionId === scenario.correctOptionId;
+      set({
+        step: { ...s, checked: true },
+        results: [
+          ...get().results,
+          {
+            scenarioId: scenario.id,
+            concept: scenario.concept,
+            domain: scenario.domain,
+            pickedOptionId: s.selectedOptionId,
+            correct,
+            xp: correct ? XP_MATCH_CORRECT : 0,
+            durationMs: 4000,
+          },
+        ],
+      });
+    },
+    continueFromVerdict: () => {
+      if (get().step.kind === "question") set({ step: { kind: "feedback" } });
+    },
+    nextScenario: () => {
+      if (get().step.kind !== "feedback") return;
+      const next = get().index + 1;
+      if (next < get().items.length) {
+        set({ index: next, step: { kind: "question", selectedOptionId: null, checked: false } });
+      } else {
+        get().end();
+      }
+    },
+    end: () => {
+      const { results } = get();
+      const correct = results.filter((r) => r.correct).length;
+      set({
+        step: { kind: "summary" },
+        summary: {
+          total: results.length,
+          correct,
+          xpEarned: correct * XP_MATCH_CORRECT + XP_SESSION_COMPLETE,
+          durationMs: 278_000,
+          results,
+          practice: get().practice,
+          endedEarly: get().index + 1 < get().items.length || get().step.kind === "question",
+        },
+      });
+    },
+    reset: () => set({ ...idleSession }),
+  };
+  set({
+    ...idleSession,
+    ...actions,
+    items,
+    index: 0,
+    practice: opts.practice ?? false,
+    startedAt: 0,
+    step: { kind: "question", selectedOptionId: null, checked: false },
+  });
+}
+
+export function resetSession(): void {
+  useSessionStore.setState({ ...idleSession });
+}
