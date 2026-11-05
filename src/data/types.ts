@@ -20,6 +20,13 @@ export interface ReviewRow {
   lastResult: "correct" | "wrong" | null;
 }
 
+/** One answered mini-validation (Sprint 3). `positions` is set for traceOrder only. */
+export interface AttemptValidation {
+  type: "bigO" | "traceFirstStep" | "traceOrder";
+  correct: boolean;
+  positions?: boolean[];
+}
+
 /** Auto-increment `id`. Indexed on scenarioId, concept, domain, timestamp. */
 export interface AttemptRow {
   id?: number;
@@ -27,8 +34,8 @@ export interface AttemptRow {
   concept: string;
   domain: string;
   correct: boolean;
-  /** One entry per validation: true when it passed. */
-  validationResults: boolean[];
+  /** One entry per validation answered. Rows written before Sprint 3 may hold plain booleans (true = passed). */
+  validationResults: Array<boolean | AttemptValidation>;
   /** The user opened Study before checking. */
   studied: boolean;
   durationMs: number;

@@ -24,8 +24,8 @@ describe("attemptsRepo", () => {
   });
 
   it("allows explicit validationResults and studied", async () => {
-    await attemptsRepo.record({ ...base, validationResults: [true, false], studied: true });
-    expect(await getDb().attempts.toArray()).toMatchObject([{ validationResults: [true, false], studied: true }]);
+    await attemptsRepo.record({ ...base, validationResults: [{ type: "bigO", correct: true }], studied: true });
+    expect(await getDb().attempts.toArray()).toMatchObject([{ validationResults: [{ type: "bigO", correct: true }], studied: true }]);
   });
 
   it("lists by scenario oldest first, and counts", async () => {
@@ -49,5 +49,24 @@ describe("attemptsRepo", () => {
     expect(await attemptsRepo.record(base)).toBe(false);
     expect(await attemptsRepo.listByScenario("x")).toEqual([]);
     expect(await attemptsRepo.count()).toBe(0);
+  });
+
+  it("add returns the id and updateValidations replaces the results", async () => {
+    const id = await attemptsRepo.add(base);
+    expect(typeof id).toBe("number");
+    const results = [{ type: "traceOrder" as const, correct: false, positions: [true, false, true] }];
+    expect(await attemptsRepo.updateValidations(id as number, results)).toBe(true);
+    expect((await getDb().attempts.toArray())[0].validationResults).toEqual(results);
+    expect(await attemptsRepo.updateValidations(9999, results)).toBe(false);
+  });
+
+  it("add/updateValidations skip when blocked and never throw on failure", async () => {
+    const id = (await attemptsRepo.add(base)) as number;
+    useProfileStore.setState({ storageBlocked: true });
+    expect(await attemptsRepo.add(base)).toBeNull();
+    expect(await attemptsRepo.updateValidations(id, [])).toBe(false);
+    useProfileStore.setState({ storageBlocked: false });
+    getDb().close();
+    expect(await attemptsRepo.updateValidations(id, [])).toBe(false);
   });
 });
