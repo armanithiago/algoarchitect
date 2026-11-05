@@ -15,6 +15,7 @@ const result = (n: number, correct: boolean, over: Partial<ItemResult> = {}): It
   pickedOptionId: "a",
   correct,
   xp: correct ? 10 : 0,
+  validations: [],
   durationMs: 5000,
   ...over,
 });

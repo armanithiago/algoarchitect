@@ -57,6 +57,7 @@ export function check(s: MachineState, now: number): MachineState {
     pickedOptionId: s.step.selectedOptionId,
     correct,
     xp: correct ? XP_MATCH_CORRECT : 0,
+    validations: [], // Sprint 3 (Agent L) appends one entry per validation checked
     durationMs: Math.max(0, now - (s.questionStartedAt ?? now)),
   };
   return { ...s, step: { kind: "question", selectedOptionId: s.step.selectedOptionId, checked: true }, results: [...s.results, result] };

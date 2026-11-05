@@ -27,8 +27,11 @@ export function makeItems(count: number, order?: string[]): SessionItem[] {
 export function installFakeSession(items: SessionItem[], opts: { practice?: boolean } = {}): void {
   const set = useSessionStore.setState;
   const get = useSessionStore.getState;
-  const actions: Pick<SessionStore, "start" | "select" | "check" | "continueFromVerdict" | "nextScenario" | "end" | "reset"> = {
+  const actions: Pick<SessionStore, "start" | "select" | "check" | "continueFromVerdict" | "setAnswer" | "checkValidation" | "continueFromValidation" | "nextScenario" | "end" | "reset"> = {
     start: async () => {},
+    setAnswer: () => {},
+    checkValidation: () => {},
+    continueFromValidation: () => {},
     select: (optionId) => {
       const s = get().step;
       if (s.kind === "question" && !s.checked) set({ step: { kind: "question", selectedOptionId: optionId, checked: false } });
@@ -49,6 +52,7 @@ export function installFakeSession(items: SessionItem[], opts: { practice?: bool
             pickedOptionId: s.selectedOptionId,
             correct,
             xp: correct ? XP_MATCH_CORRECT : 0,
+            validations: [],
             durationMs: 4000,
           },
         ],

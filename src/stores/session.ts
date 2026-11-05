@@ -85,6 +85,10 @@ export const useSessionStore = create<Store>()((set, get) => {
       }
     },
 
+    // PLACEHOLDERS (Sprint 3): Agent L implements validation steps in the machine and wires these.
+    setAnswer: () => {},
+    checkValidation: () => {},
+    continueFromValidation: () => {},
     continueFromVerdict: () => apply(machine.continueFromVerdict(current())),
     nextScenario: () => apply(machine.nextScenario(current(), now())),
     end: () => apply(machine.end(current(), now())),
