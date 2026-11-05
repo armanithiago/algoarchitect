@@ -21,6 +21,21 @@
 | Study content | The [Patterns Handbook](https://github.com/armanithiago/patterns-handbook) (30 chapters + 4 appendices), converted at build time and **bundled offline** |
 | Hosting | Static hosting with HTTPS (Netlify / Vercel / GitHub Pages / Cloudflare Pages) |
 
+### 1.0 Progress (updated 2026-11-05)
+
+| Sprint | Status | Notes |
+|---|---|---|
+| Sprint 0 | **Partly done** | Done: repo, tooling, CI (E1-01, E1-02), design tokens and base components (E1-03, no Storybook yet), wireframes (E1-04, in the design system and the demo), content schema and validator (E1-05). Not done: ADRs (E1-07). The 5 pilot scenarios (E1-06) were folded into Sprint 2 |
+| Sprint 1 | **Done** | E2-01 to E2-09 merged and verified in a real browser (offline reload, manifest, icons, thumb rule). Not verified: installing on a real phone |
+| Sprint 2 | **Done** | E3-01 to E3-07 and E3-13 part 1 merged. Verified in the production build, **offline**: a 10-question session across all five domains, 10 attempts saved to IndexedDB, XP awarded once. 15 scenarios, 302 tests. Main bundle 146.5 kB gzipped (limit 200) |
+| Sprint 3 | Not started | Mini-validations (Big-O picker, trace first step, trace order UI) and scenarios 16-50. The schema, the algorithm checker and 12 validations already exist in the content |
+
+**Known gaps carried forward**
+- Not built: resume an interrupted session (E3-08), system Back opening the end-session confirmation, the Study button (Sprint 5).
+- The `[X]` close button is not reachable while the explanation sheet is open (Esc and Next scenario are the exits).
+- Not verified: real iPhone and Android installation, haptics on a real device, VoiceOver and TalkBack, the content check on the full 50 scenarios, the GitHub Actions run after the latest pushes.
+- Content: B-trees have no scenario because the handbook has no B-tree section.
+
 ### 1.1 Timeline at a glance
 
 | Sprint | Dates | Theme | PRD phase | Milestone |
